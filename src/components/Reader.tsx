@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import Image from "next/image";
+import { ProxyImage } from "@/components/ProxyImage";
 import type { ChapterPage, Chapter } from "@/lib/types";
 import { updateHistoryPage } from "@/lib/history";
 
@@ -18,14 +18,14 @@ function PageImage({ page, sourceId }: { page: ChapterPage; sourceId: string }) 
   const [hidden, setHidden] = useState(false);
   if (hidden) return null;
   return (
-    <Image
-      src={`/api/proxy?url=${encodeURIComponent(page.imageUrl)}&sourceId=${sourceId}`}
+    <ProxyImage
+      src={page.imageUrl}
+      sourceId={sourceId}
       alt={`Página ${page.index + 1}`}
       width={page.width ?? 800}
       height={page.height ?? 1200}
       className="w-full h-auto block"
-      unoptimized
-      loading={page.index < 3 ? "eager" : "lazy"}
+      priority={page.index < 3}
       onError={() => setHidden(true)}
     />
   );

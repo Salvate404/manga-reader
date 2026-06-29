@@ -2,7 +2,7 @@
 
 import { useRef, useState, useCallback, useEffect, type ReactNode } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import { ProxyImage } from "@/components/ProxyImage";
 import type { TrendingSection } from "@/lib/trending-service";
 import type { MangaSearchResult } from "@/lib/types";
 
@@ -108,13 +108,12 @@ function TrendingCard({ manga }: { manga: MangaSearchResult }) {
     >
       <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-zinc-900 border border-zinc-800 group-hover:border-zinc-600 transition-colors shadow-lg">
         {manga.cover ? (
-          <Image
-            src={`/api/proxy?url=${encodeURIComponent(manga.cover)}&sourceId=${manga.sourceId}`}
+          <ProxyImage
+            src={manga.cover}
+            sourceId={manga.sourceId}
             alt={manga.title}
             fill
-            className="object-cover group-hover:scale-105 transition-transform duration-300"
-            sizes="110px"
-            unoptimized
+            className="group-hover:scale-105 transition-transform duration-300"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-zinc-700 text-xs">

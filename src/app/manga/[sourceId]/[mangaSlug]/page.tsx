@@ -1,8 +1,9 @@
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChapterList } from "@/components/ChapterList";
+import { ProxyImage } from "@/components/ProxyImage";
 import { getMangaChapters } from "@/lib/manga-service";
+import { resolveImageUrl } from "@/lib/image-url";
 
 interface MangaPageProps {
   params: Promise<{ sourceId: string; mangaSlug: string }>;
@@ -36,7 +37,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
           <div
             className="absolute inset-0 opacity-10 bg-cover bg-center blur-2xl scale-110"
             style={{
-              backgroundImage: `url('/api/proxy?url=${encodeURIComponent(manga.cover)}&sourceId=${sourceId}')`,
+              backgroundImage: `url('${resolveImageUrl(manga.cover, sourceId)}')`,
             }}
           />
         )}
@@ -45,13 +46,11 @@ export default async function MangaPage({ params }: MangaPageProps) {
           {/* Capa */}
           <div className="relative w-[110px] h-[160px] flex-shrink-0 rounded-xl overflow-hidden bg-zinc-800 shadow-xl">
             {manga.cover ? (
-              <Image
-                src={`/api/proxy?url=${encodeURIComponent(manga.cover)}&sourceId=${sourceId}`}
+              <ProxyImage
+                src={manga.cover}
+                sourceId={sourceId}
                 alt={manga.title}
                 fill
-                className="object-cover"
-                sizes="110px"
-                unoptimized
                 priority
               />
             ) : (

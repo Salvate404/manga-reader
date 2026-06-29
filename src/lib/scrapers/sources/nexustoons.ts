@@ -1,92 +1,7 @@
-import crypto from "node:crypto";
 import axios from "axios";
 import { BaseScraper } from "../base";
+import { processOrionResponse } from "@/lib/nexus-crypto";
 import type { MangaDetail, MangaSearchResult, ChapterPage } from "@/lib/types";
-
-// ─── OrionCrypto — algoritmo nativo do NexusToons ────────────────────────────
-
-const ORION_SECRET = "OrionNexus2025CryptoKey!Secure";
-
-interface OrionKey {
-  key: Uint8Array;
-  sbox: Uint8Array;
-  rsbox: Uint8Array;
-}
-
-function initSBoxForKey(entry: OrionKey): void {
-  const t = entry.key;
-  for (let r = 0; r < 256; r++) entry.sbox[r] = r;
-  let n = 0;
-  for (let r = 0; r < 256; r++) {
-    n = (n + entry.sbox[r] + t[r % t.length]) % 256;
-    [entry.sbox[r], entry.sbox[n]] = [entry.sbox[n], entry.sbox[r]];
-  }
-  for (let r = 0; r < 256; r++) entry.rsbox[entry.sbox[r]] = r;
-}
-
-async function buildOrionKeys(): Promise<OrionKey[]> {
-  const keys: OrionKey[] = [];
-  for (let n = 0; n < 5; n++) {
-    const keyStr = `_orion_key_${n}_v2_${ORION_SECRET}`;
-    const hash = crypto.createHash("sha256").update(keyStr, "utf8").digest("hex");
-    const keyBytes = new Uint8Array(
-      (hash.match(/.{1,2}/g) ?? []).map((b) => parseInt(b, 16))
-    );
-    const entry: OrionKey = {
-      key:   keyBytes,
-      sbox:  new Uint8Array(256),
-      rsbox: new Uint8Array(256),
-    };
-    initSBoxForKey(entry);
-    keys.push(entry);
-  }
-  return keys;
-}
-
-function rotateRight(e: number, t: number): number {
-  const shift = t % 8;
-  return 255 & ((e >>> shift) | (e << (8 - shift)));
-}
-
-function orionDecrypt(keyIndex: number, encrypted: string, keys: OrionKey[]): string {
-  const entry = keys[keyIndex];
-  const r = entry.key;
-  const a = entry.rsbox;
-  const l = r.length;
-  const decoded = Buffer.from(encrypted, "base64");
-  const o = new Uint8Array(decoded);
-  const s = new Uint8Array(o.length);
-  for (let c = o.length - 1; c >= 0; c--) {
-    let e = o[c];
-    e ^= c > 0 ? o[c - 1] : r[l - 1];
-    e = a[e];
-    const t = ((r[(c + 3) % l] + (255 & c)) & 255) % 7 + 1;
-    e = rotateRight(e, t);
-    e ^= r[c % l];
-    s[c] = e;
-  }
-  return Buffer.from(s).toString("utf8");
-}
-
-function processOrionResponse<T>(data: unknown, keys: OrionKey[]): T {
-  if (!data || typeof data !== "object") return data as T;
-  const d = data as Record<string, unknown>;
-  if (
-    typeof d.d === "string" &&
-    typeof d.k === "number" &&
-    typeof d.v === "number" &&
-    (d.v === 1 || d.v === 2)
-  ) {
-    const keyIndex = d.v === 1 ? 0 : (d.k as number) || 0;
-    try {
-      const decrypted = orionDecrypt(keyIndex, d.d as string, keys);
-      return JSON.parse(decrypted) as T;
-    } catch {
-      return data as T;
-    }
-  }
-  return data as T;
-}
 
 // ─── Tipos da API do NexusToons ──────────────────────────────────────────────
 
@@ -137,22 +52,14 @@ export class NexusToonsScraper extends BaseScraper {
   readonly baseUrl    = BASE;
   readonly language   = "pt-BR";
 
-  private keys: OrionKey[] | null = null;
-
-  private async getKeys(): Promise<OrionKey[]> {
-    if (!this.keys) this.keys = await buildOrionKeys();
-    return this.keys;
-  }
-
   private async apiGet<T>(path: string, params?: Record<string, string>): Promise<T> {
-    const keys = await this.getKeys();
     const { data } = await axios.get<unknown>(`${API}${path}`, {
       params,
       headers: { ...HEADERS, Accept: "application/json" },
       timeout: 12_000,
       withCredentials: false,
     });
-    return processOrionResponse<T>(data, keys);
+    return processOrionResponse<T>(data);
   }
 
   override getImageHeaders(): Record<string, string> {

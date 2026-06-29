@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
+import { ProxyImage } from "@/components/ProxyImage";
 import type { ReadingHistoryEntry } from "@/lib/types";
 
 interface HistorySectionProps {
@@ -61,13 +61,12 @@ function HistoryCard({ entry }: { entry: ReadingHistoryEntry }) {
       <Link href={mangaHref} className="block relative">
         <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-zinc-900 border border-zinc-800 group-hover:border-zinc-700 transition-colors">
           {entry.cover ? (
-            <Image
-              src={`/api/proxy?url=${encodeURIComponent(entry.cover)}&sourceId=${entry.sourceId}`}
+            <ProxyImage
+              src={entry.cover}
+              sourceId={entry.sourceId}
               alt={entry.mangaTitle}
               fill
-              className="object-cover group-hover:scale-105 transition-transform duration-300"
-              sizes="(max-width: 640px) 33vw, (max-width: 768px) 25vw, 20vw"
-              unoptimized
+              className="group-hover:scale-105 transition-transform duration-300"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-zinc-700">

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Image from "next/image";
+import { ProxyImage } from "@/components/ProxyImage";
 import type { MangaSearchResult } from "@/lib/types";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -38,13 +38,12 @@ export function MangaCard({ manga }: MangaCardProps) {
           {/* Capa */}
           <div className="relative w-[72px] h-[104px] flex-shrink-0 rounded-xl overflow-hidden bg-zinc-800">
             {manga.cover ? (
-              <Image
-                src={`/api/proxy?url=${encodeURIComponent(manga.cover)}&sourceId=${manga.sourceId}`}
+              <ProxyImage
+                src={manga.cover}
+                sourceId={manga.sourceId}
                 alt={manga.title}
                 fill
-                className="object-cover group-hover:scale-105 transition-transform duration-300"
-                sizes="72px"
-                unoptimized
+                className="group-hover:scale-105 transition-transform duration-300"
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-zinc-600">

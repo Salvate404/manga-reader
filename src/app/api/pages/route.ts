@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getScraperById } from "@/lib/scrapers/registry";
+import { fetchNexusViaEdge } from "@/lib/nexus-api";
 import type { PagesApiResponse } from "@/lib/types";
 
 export const maxDuration = 30;
@@ -14,6 +15,21 @@ export async function GET(request: NextRequest) {
       { error: "Parâmetros 'sourceId' e 'chapterId' são obrigatórios." },
       { status: 400 }
     );
+  }
+
+  if (sourceId === "nexustoons") {
+    try {
+      const data = await fetchNexusViaEdge<PagesApiResponse>(
+        `/api/nexus/chapter/${encodeURIComponent(chapterId)}`
+      );
+      if (!data?.pages) {
+        return NextResponse.json({ error: "Capítulo não encontrado." }, { status: 404 });
+      }
+      return NextResponse.json(data);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Erro interno ao buscar páginas.";
+      return NextResponse.json({ error: message }, { status: 500 });
+    }
   }
 
   const scraper = getScraperById(sourceId);
