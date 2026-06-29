@@ -39,7 +39,7 @@ export function MangaCard({ manga }: MangaCardProps) {
           <div className="relative w-[72px] h-[104px] flex-shrink-0 rounded-xl overflow-hidden bg-zinc-800">
             {manga.cover ? (
               <Image
-                src={`/api/proxy?url=${encodeURIComponent(manga.cover)}`}
+                src={`/api/proxy?url=${encodeURIComponent(manga.cover)}&sourceId=${manga.sourceId}`}
                 alt={manga.title}
                 fill
                 className="object-cover group-hover:scale-105 transition-transform duration-300"

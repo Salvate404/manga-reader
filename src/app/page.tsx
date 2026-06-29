@@ -4,20 +4,30 @@ import { useState, useMemo } from "react";
 import { SearchBar } from "@/components/SearchBar";
 import { MangaCard } from "@/components/MangaCard";
 import { HistorySection } from "@/components/HistorySection";
+import { TrendingCarousel } from "@/components/TrendingCarousel";
 import { useSearch } from "@/hooks/useSearch";
 import { useHistory } from "@/hooks/useHistory";
 import { useSourceFilter } from "@/hooks/useSourceFilter";
+import { useTrending } from "@/hooks/useTrending";
+import { BROWSE_GENRES } from "@/lib/genres";
 
 export default function HomePage() {
   const { query, setQuery, results, isLoading, error, hasSearched, search } = useSearch();
   const { history, clearHistory } = useHistory();
   const { selectedSources, toggle, sourcesParam } = useSourceFilter();
+  const { sections, isLoading: trendingLoading } = useTrending();
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
 
   function handleSearch(q: string) {
     setQuery(q);
     setSelectedGenre(null);
     search(q, sourcesParam);
+  }
+
+  function handleBrowseGenre(genre: string) {
+    setSelectedGenre(genre);
+    setQuery(genre);
+    search(genre, sourcesParam);
   }
 
   // Gêneros únicos dos resultados (ordenados por frequência)
@@ -61,10 +71,17 @@ export default function HomePage() {
         initialValue={query}
         selectedSources={selectedSources}
         onToggleSource={toggle}
+        browseGenres={hasSearched ? [] : [...BROWSE_GENRES]}
         availableGenres={hasSearched && !isLoading ? availableGenres : []}
         selectedGenre={selectedGenre}
         onSelectGenre={setSelectedGenre}
+        onBrowseGenre={handleBrowseGenre}
       />
+
+      {/* Destaques por fonte */}
+      {!hasSearched && (
+        <TrendingCarousel sections={sections} isLoading={trendingLoading} />
+      )}
 
       {/* Resultados */}
       {hasSearched && (
@@ -122,5 +139,3 @@ export default function HomePage() {
     </div>
   );
 }
-
-

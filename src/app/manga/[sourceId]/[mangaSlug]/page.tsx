@@ -36,7 +36,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
           <div
             className="absolute inset-0 opacity-10 bg-cover bg-center blur-2xl scale-110"
             style={{
-              backgroundImage: `url('/api/proxy?url=${encodeURIComponent(manga.cover)}')`,
+              backgroundImage: `url('/api/proxy?url=${encodeURIComponent(manga.cover)}&sourceId=${sourceId}')`,
             }}
           />
         )}
@@ -46,7 +46,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
           <div className="relative w-[110px] h-[160px] flex-shrink-0 rounded-xl overflow-hidden bg-zinc-800 shadow-xl">
             {manga.cover ? (
               <Image
-                src={`/api/proxy?url=${encodeURIComponent(manga.cover)}`}
+                src={`/api/proxy?url=${encodeURIComponent(manga.cover)}&sourceId=${sourceId}`}
                 alt={manga.title}
                 fill
                 className="object-cover"

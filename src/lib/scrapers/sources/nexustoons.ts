@@ -163,9 +163,8 @@ export class NexusToonsScraper extends BaseScraper {
   }
 
   async search(query: string): Promise<MangaSearchResult[]> {
-    // A API /mangas retorna lista paginada — filtramos por título no lado do servidor
-    const data = await this.apiGet<{ data?: NexusManga[] }>("/mangas", {
-      title: query,
+    const data = await this.apiGet<{ data?: NexusManga[] | null }>("/mangas", {
+      search: query,
       limit: "20",
     });
 
@@ -173,28 +172,25 @@ export class NexusToonsScraper extends BaseScraper {
 
     return mangas
       .filter((m) => !!m.title && !!m.slug)
-      .map((m) => ({
-        sourceId:     this.sourceId,
-        sourceName:   this.sourceName,
-        mangaId:      m.slug,
-        title:        m.title,
-        cover:        m.coverImage ?? null,
-        url:          `${BASE}/manga/${m.slug}`,
-        chapterCount: m.chapterCount,
-        status:       mapStatus(m.status),
-        genres:       m.categories?.map((c) => c.category.name) ?? [],
-      }));
+      .map((m) => this.toSearchResult(m));
+  }
+
+  async getTrending(limit = 10): Promise<MangaSearchResult[]> {
+    const data = await this.apiGet<{ data?: NexusManga[] }>("/mangas", {
+      page: "1",
+      limit: String(limit),
+    });
+    return (data?.data ?? [])
+      .filter((m) => !!m.title && !!m.slug)
+      .slice(0, limit)
+      .map((m) => this.toSearchResult(m));
   }
 
   async getMangaDetail(mangaId: string): Promise<MangaDetail> {
-    // /api/manga/{slug} não existe — buscar pelo slug via /api/mangas
-    const result = await this.apiGet<{ data?: NexusManga[] }>("/mangas", {
-      title: mangaId,
-      limit: "50",
-    });
-    const manga =
-      result?.data?.find((m) => m.slug === mangaId) ?? result?.data?.[0];
-    if (!manga) throw new Error(`Mangá não encontrado no NexusToons: ${mangaId}`);
+    const manga = await this.apiGet<NexusManga>(`/manga/${mangaId}`);
+    if (!manga?.title || !manga.slug) {
+      throw new Error(`Mangá não encontrado no NexusToons: ${mangaId}`);
+    }
 
     const genres = manga.categories?.map((c) => c.category.name) ?? [];
 
@@ -237,6 +233,20 @@ export class NexusToonsScraper extends BaseScraper {
         imageUrl: p.imageUrl ?? p.url ?? p.path ?? "",
       }))
       .filter((p) => !!p.imageUrl);
+  }
+
+  private toSearchResult(m: NexusManga): MangaSearchResult {
+    return {
+      sourceId:     this.sourceId,
+      sourceName:   this.sourceName,
+      mangaId:      m.slug,
+      title:        m.title,
+      cover:        m.coverImage ?? null,
+      url:          `${BASE}/manga/${m.slug}`,
+      chapterCount: m.chapterCount,
+      status:       mapStatus(m.status),
+      genres:       m.categories?.map((c) => c.category.name) ?? [],
+    };
   }
 }
 

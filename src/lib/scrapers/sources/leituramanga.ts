@@ -52,6 +52,27 @@ export class LeituraMangaScraper extends BaseScraper {
       status:     STATUS_MAP[item.status as number] ?? "unknown",
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       genres:     (item.genres ?? []).map((g: any) => (typeof g === "string" ? g : (g.name ?? ""))).filter(Boolean) as string[],
+      }));
+  }
+
+  async getTrending(limit = 10): Promise<MangaSearchResult[]> {
+    const { data } = await axios.get(`${API}/api/search/manga`, {
+      params: { sort: "views", page: 1, limit, includeAdult: "true" },
+      headers: HEADERS,
+      timeout: 12_000,
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const items: any[] = data?.data?.data ?? [];
+    return items.map((item) => ({
+      sourceId:   this.sourceId,
+      sourceName: this.sourceName,
+      mangaId:    item.slug,
+      title:      item.title,
+      cover:      `${CDN}/${item.slug}/cover-sm.webp`,
+      url:        `${BASE}/manga/${item.slug}`,
+      status:     STATUS_MAP[item.status as number] ?? "unknown",
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      genres:     (item.genres ?? []).map((g: any) => (typeof g === "string" ? g : (g.name ?? ""))).filter(Boolean) as string[],
     }));
   }
 

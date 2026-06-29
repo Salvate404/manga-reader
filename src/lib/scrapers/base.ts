@@ -28,6 +28,13 @@ export abstract class BaseScraper {
   abstract getChapterPages(chapterId: string): Promise<ChapterPage[]>;
 
   /**
+   * Retorna mangás em alta/populares da fonte.
+   */
+  async getTrending(_limit = 10): Promise<MangaSearchResult[]> {
+    return [];
+  }
+
+  /**
    * Retorna os headers HTTP necessários para fazer proxy das imagens desta fonte.
    * Por padrão retorna apenas o Referer. Sobrescreva quando necessário.
    */

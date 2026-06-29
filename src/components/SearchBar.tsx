@@ -9,10 +9,11 @@ interface SearchBarProps {
   initialValue?: string;
   selectedSources: Set<string>;
   onToggleSource: (id: string) => void;
-  // Gêneros disponíveis nos resultados atuais
+  browseGenres?: string[];
   availableGenres?: string[];
   selectedGenre: string | null;
   onSelectGenre: (genre: string | null) => void;
+  onBrowseGenre?: (genre: string) => void;
 }
 
 export function SearchBar({
@@ -21,9 +22,11 @@ export function SearchBar({
   initialValue = "",
   selectedSources,
   onToggleSource,
+  browseGenres = [],
   availableGenres = [],
   selectedGenre,
   onSelectGenre,
+  onBrowseGenre,
 }: SearchBarProps) {
   const [value, setValue] = useState(initialValue);
 
@@ -90,8 +93,8 @@ export function SearchBar({
         })}
       </div>
 
-      {/* Filtro de gêneros — só aparece quando há resultados */}
-      {availableGenres.length > 0 && (
+      {/* Gêneros — navegação inicial ou filtro dos resultados */}
+      {(browseGenres.length > 0 || availableGenres.length > 0) && (
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-zinc-500 text-xs font-medium shrink-0">Gênero:</span>
           <button
@@ -104,10 +107,16 @@ export function SearchBar({
           >
             Todos
           </button>
-          {availableGenres.map((genre) => (
+          {(availableGenres.length > 0 ? availableGenres : browseGenres).map((genre) => (
             <button
               key={genre}
-              onClick={() => onSelectGenre(selectedGenre === genre ? null : genre)}
+              onClick={() => {
+                if (availableGenres.length > 0) {
+                  onSelectGenre(selectedGenre === genre ? null : genre);
+                } else {
+                  onBrowseGenre?.(genre);
+                }
+              }}
               className={`text-xs px-2.5 py-1 rounded-full border transition-all ${
                 selectedGenre === genre
                   ? "bg-violet-600/20 border-violet-500/60 text-violet-300"

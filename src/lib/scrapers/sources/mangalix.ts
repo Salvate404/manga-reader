@@ -99,6 +99,44 @@ export class MangaLixScraper extends BaseScraper {
       });
   }
 
+  async getTrending(limit = 10): Promise<MangaSearchResult[]> {
+    const data = await getChaptersJson();
+    const ranked = Object.entries(data)
+      .map(([slug, chapters]) => {
+        const latestChap = chapters[0];
+        const title = latestChap
+          ? titleFromChapterTitle(latestChap.title, latestChap.number)
+          : slugToTitle(slug);
+        return {
+          slug,
+          title,
+          chapters,
+          score: chapters.length,
+          latest: latestChap?.releaseDate ?? "",
+        };
+      })
+      .sort((a, b) => {
+        const dateCmp = b.latest.localeCompare(a.latest);
+        return dateCmp !== 0 ? dateCmp : b.score - a.score;
+      })
+      .slice(0, limit);
+
+    return ranked.map(({ slug, title, chapters }) => {
+      const latestChap = chapters[0];
+      return {
+        sourceId: this.sourceId,
+        sourceName: this.sourceName,
+        mangaId: slug,
+        title,
+        cover: `${BASE}/covers/${slug}-cover.webp`,
+        url: `${BASE}/manga/${slug}`,
+        chapterCount: chapters.length,
+        lastChapter: latestChap ? String(latestChap.number) : undefined,
+        status: "unknown" as const,
+      };
+    });
+  }
+
   async getMangaDetail(mangaId: string): Promise<MangaDetail> {
     const data = await getChaptersJson();
     const chapters = data[mangaId];

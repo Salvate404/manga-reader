@@ -62,7 +62,7 @@ function HistoryCard({ entry }: { entry: ReadingHistoryEntry }) {
         <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-zinc-900 border border-zinc-800 group-hover:border-zinc-700 transition-colors">
           {entry.cover ? (
             <Image
-              src={`/api/proxy?url=${encodeURIComponent(entry.cover)}`}
+              src={`/api/proxy?url=${encodeURIComponent(entry.cover)}&sourceId=${entry.sourceId}`}
               alt={entry.mangaTitle}
               fill
               className="object-cover group-hover:scale-105 transition-transform duration-300"
