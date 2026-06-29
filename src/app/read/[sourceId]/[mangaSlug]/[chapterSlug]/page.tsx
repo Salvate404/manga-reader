@@ -1,30 +1,17 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Reader } from "@/components/Reader";
-import { getBaseUrl } from "@/lib/base-url";
-import type { ChaptersApiResponse } from "@/lib/types";
+import { getMangaChapters } from "@/lib/manga-service";
 
 interface ReadPageProps {
   params: Promise<{ sourceId: string; mangaSlug: string; chapterSlug: string }>;
 }
 
-async function getMangaWithChapters(sourceId: string, mangaSlug: string) {
-  try {
-    const baseUrl = getBaseUrl();
-    const res = await fetch(
-      `${baseUrl}/api/chapters?sourceId=${sourceId}&mangaId=${encodeURIComponent(mangaSlug)}`,
-      { next: { revalidate: 300 } }
-    );
-    if (!res.ok) return null;
-    return (await res.json()) as ChaptersApiResponse;
-  } catch {
-    return null;
-  }
-}
+export const maxDuration = 30;
 
 export default async function ReadPage({ params }: ReadPageProps) {
   const { sourceId, mangaSlug, chapterSlug } = await params;
-  const data = await getMangaWithChapters(sourceId, mangaSlug);
+  const data = await getMangaChapters(sourceId, mangaSlug);
 
   if (!data) notFound();
 
@@ -69,7 +56,7 @@ export default async function ReadPage({ params }: ReadPageProps) {
 
 export async function generateMetadata({ params }: ReadPageProps) {
   const { sourceId, mangaSlug, chapterSlug } = await params;
-  const data = await getMangaWithChapters(sourceId, mangaSlug);
+  const data = await getMangaChapters(sourceId, mangaSlug);
   const chapter = data?.manga.chapters.find((c) => c.id === chapterSlug);
   const title = data?.manga.title ?? mangaSlug;
   return {

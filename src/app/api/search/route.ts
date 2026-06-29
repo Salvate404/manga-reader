@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAllScrapers } from "@/lib/scrapers/registry";
 import type { SearchApiResponse } from "@/lib/types";
 
+export const maxDuration = 30;
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const query = searchParams.get("q")?.trim();

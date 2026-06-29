@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getScraperById } from "@/lib/scrapers/registry";
+import { getMangaChapters } from "@/lib/manga-service";
 import type { ChaptersApiResponse } from "@/lib/types";
+
+export const maxDuration = 30;
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -14,8 +17,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const scraper = getScraperById(sourceId);
-  if (!scraper) {
+  if (!getScraperById(sourceId)) {
     return NextResponse.json(
       { error: `Fonte '${sourceId}' não encontrada.` },
       { status: 404 }
@@ -23,8 +25,11 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const manga = await scraper.getMangaDetail(mangaId);
-    const response: ChaptersApiResponse = { manga };
+    const data = await getMangaChapters(sourceId, mangaId);
+    if (!data) {
+      return NextResponse.json({ error: "Mangá não encontrado." }, { status: 404 });
+    }
+    const response: ChaptersApiResponse = data;
     return NextResponse.json(response);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Erro interno ao buscar capítulos.";

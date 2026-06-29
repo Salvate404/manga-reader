@@ -2,30 +2,17 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChapterList } from "@/components/ChapterList";
-import { getBaseUrl } from "@/lib/base-url";
-import type { ChaptersApiResponse } from "@/lib/types";
+import { getMangaChapters } from "@/lib/manga-service";
 
 interface MangaPageProps {
   params: Promise<{ sourceId: string; mangaSlug: string }>;
 }
 
-async function getMangaDetail(sourceId: string, mangaSlug: string) {
-  try {
-    const baseUrl = getBaseUrl();
-    const res = await fetch(
-      `${baseUrl}/api/chapters?sourceId=${sourceId}&mangaId=${encodeURIComponent(mangaSlug)}`,
-      { next: { revalidate: 300 } } // cache por 5 min
-    );
-    if (!res.ok) return null;
-    return (await res.json()) as ChaptersApiResponse;
-  } catch {
-    return null;
-  }
-}
+export const maxDuration = 30;
 
 export default async function MangaPage({ params }: MangaPageProps) {
   const { sourceId, mangaSlug } = await params;
-  const data = await getMangaDetail(sourceId, mangaSlug);
+  const data = await getMangaChapters(sourceId, mangaSlug);
 
   if (!data) notFound();
 
