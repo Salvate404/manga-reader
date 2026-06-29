@@ -1,36 +1,32 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MangáReader
 
-## Getting Started
+Leitor de mangá com busca em várias fontes, histórico de leitura e interface sem anúncios.
 
-First, run the development server:
+## Rodar localmente
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev -- --webpack
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abra [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+> Use `--webpack` no dev: o Turbopack (padrão do Next 16) pode travar o PC em alguns ambientes Windows.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Publicar na internet (site funcionando de verdade)
 
-## Learn More
+**GitHub Pages não serve este projeto.** O Pages só mostra arquivos estáticos (por isso aparece o README com texto do create-next-app). O MangáReader precisa de servidor Node para as APIs de busca, capítulos e proxy de imagens.
 
-To learn more about Next.js, take a look at the following resources:
+A forma mais simples é a **Vercel** (grátis, feita pelos criadores do Next.js):
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Envie o código para o GitHub (`Salvate404/manga-reader`)
+2. Acesse [vercel.com/new](https://vercel.com/new) e faça login com GitHub
+3. Importe o repositório `manga-reader`
+4. Clique em **Deploy** (não precisa mudar nenhuma configuração)
+5. Em ~1 minuto você recebe um link tipo `https://manga-reader-xxx.vercel.app`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Cada push na branch `master` atualiza o site automaticamente.
 
-## Deploy on Vercel
+### GitHub Pages
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Pode manter o Pages só para documentação do repositório, ou desativar em **Settings → Pages**. O site ao vivo deve ficar no link da Vercel.

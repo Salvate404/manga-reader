@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChapterList } from "@/components/ChapterList";
+import { getBaseUrl } from "@/lib/base-url";
 import type { ChaptersApiResponse } from "@/lib/types";
 
 interface MangaPageProps {
@@ -10,7 +11,7 @@ interface MangaPageProps {
 
 async function getMangaDetail(sourceId: string, mangaSlug: string) {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
+    const baseUrl = getBaseUrl();
     const res = await fetch(
       `${baseUrl}/api/chapters?sourceId=${sourceId}&mangaId=${encodeURIComponent(mangaSlug)}`,
       { next: { revalidate: 300 } } // cache por 5 min

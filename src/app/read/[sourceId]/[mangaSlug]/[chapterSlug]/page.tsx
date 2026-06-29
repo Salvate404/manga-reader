@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Reader } from "@/components/Reader";
+import { getBaseUrl } from "@/lib/base-url";
 import type { ChaptersApiResponse } from "@/lib/types";
 
 interface ReadPageProps {
@@ -9,7 +10,7 @@ interface ReadPageProps {
 
 async function getMangaWithChapters(sourceId: string, mangaSlug: string) {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
+    const baseUrl = getBaseUrl();
     const res = await fetch(
       `${baseUrl}/api/chapters?sourceId=${sourceId}&mangaId=${encodeURIComponent(mangaSlug)}`,
       { next: { revalidate: 300 } }
