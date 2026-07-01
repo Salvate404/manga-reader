@@ -31,6 +31,16 @@ interface NexusPage {
   path?: string;
 }
 
+function normalizeText(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function mapStatus(s?: string): MangaSearchResult["status"] {
   if (!s) return "unknown";
   const lower = s.toLowerCase();
@@ -70,7 +80,33 @@ export async function fetchNexusSearch(query: string, limit = 20): Promise<Manga
     search: query,
     limit: String(limit),
   });
-  return (data?.data ?? []).filter((m) => m.title && m.slug).map(toSearchResult);
+
+  const direct = (data?.data ?? []).filter((m) => m.title && m.slug).map(toSearchResult);
+  if (direct.length > 0) return direct;
+
+  const normalized = normalizeText(query);
+  if (!normalized) return [];
+
+  const normalizedData = await nexusFetch<{ data?: NexusManga[] | null }>("/mangas", {
+    search: normalized,
+    limit: String(limit),
+  });
+
+  const byNormalizedSearch = (normalizedData?.data ?? [])
+    .filter((m) => m.title && m.slug)
+    .map(toSearchResult);
+  if (byNormalizedSearch.length > 0) return byNormalizedSearch;
+
+  const fallbackPool = await nexusFetch<{ data?: NexusManga[] | null }>("/mangas", {
+    page: "1",
+    limit: "80",
+  });
+
+  return (fallbackPool?.data ?? [])
+    .filter((m) => m.title && m.slug)
+    .filter((m) => normalizeText(m.title).includes(normalized))
+    .slice(0, limit)
+    .map(toSearchResult);
 }
 
 export async function fetchNexusTrending(limit = 10): Promise<MangaSearchResult[]> {

@@ -3,11 +3,16 @@ import { getScraperById } from "@/lib/scrapers/registry";
 
 const ALLOWED_CONTENT_TYPES = new Set([
   "image/jpeg",
+  "image/jpg",
   "image/png",
   "image/webp",
   "image/gif",
   "image/avif",
 ]);
+
+function hasLikelyImageExtension(url: URL): boolean {
+  return /\.(?:jpe?g|png|webp|gif|avif)$/i.test(url.pathname);
+}
 
 /**
  * Proxy de imagens — evita CORS e oculta a origem dos recursos.
@@ -62,11 +67,22 @@ export async function GET(request: NextRequest) {
       };
 
   try {
-    const upstream = await fetch(imageUrl, {
+    let upstream = await fetch(imageUrl, {
       headers: fetchHeaders,
       // Timeout via AbortController
       signal: AbortSignal.timeout(15_000),
     });
+
+    // Algumas CDNs recusam Referer/Origin forjados; tenta novamente sem headers da fonte.
+    if (!upstream.ok && (upstream.status === 401 || upstream.status === 403) && sourceId) {
+      upstream = await fetch(imageUrl, {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
+        },
+        signal: AbortSignal.timeout(15_000),
+      });
+    }
 
     if (!upstream.ok) {
       return new NextResponse(`Upstream retornou ${upstream.status}`, {
@@ -77,8 +93,13 @@ export async function GET(request: NextRequest) {
     const contentType = upstream.headers.get("content-type") ?? "";
     const baseType = contentType.split(";")[0].trim().toLowerCase();
 
-    // Aceita apenas imagens conhecidas
-    if (!ALLOWED_CONTENT_TYPES.has(baseType)) {
+    // Aceita tipos de imagem e fallback para octet-stream quando URL indica arquivo de imagem.
+    const contentTypeAllowed =
+      ALLOWED_CONTENT_TYPES.has(baseType) ||
+      baseType.startsWith("image/") ||
+      (baseType === "application/octet-stream" && hasLikelyImageExtension(parsed));
+
+    if (!contentTypeAllowed) {
       return new NextResponse("Tipo de conteúdo não permitido.", { status: 415 });
     }
 
