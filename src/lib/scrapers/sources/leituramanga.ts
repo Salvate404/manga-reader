@@ -16,7 +16,7 @@ const HEADERS = {
   "User-Agent":
     "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
   Referer:          BASE,
-  Origin:           BASE,
+  // Origin omitido intencionalmente: causa HTTP 500 na API do LeituraMangá
   "Accept-Language": "pt-BR,pt;q=0.9",
 };
 
@@ -154,8 +154,8 @@ export class LeituraMangaScraper extends BaseScraper {
         });
         cdnBase = cdnOld;
       } catch {
-        // Nenhum padrão respondeu — retornar erro
-        throw new Error(`Páginas não encontradas no CDN para ${chapterId}`);
+        // Nenhum padrão respondeu — capítulo pode não estar no CDN ainda
+        throw new Error(`Capítulo ainda não disponível no CDN para ${mangaSlug} cap. ${chapNum}`);
       }
     }
 

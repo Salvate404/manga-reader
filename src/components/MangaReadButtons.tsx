@@ -22,8 +22,8 @@ export function MangaReadButtons({ sourceId, mangaId, firstChapterId }: Props) {
     return () => clearTimeout(id);
   }, [sourceId, mangaId]);
 
-  // Só mostra "Continuar" se o capítulo salvo for diferente do início
-  const showContinue = !!lastRead && lastRead.chapterId !== firstChapterId;
+  // Mostra "Continuar" sempre que há histórico (mesmo sendo o primeiro capítulo)
+  const showContinue = !!lastRead;
   const pageLabel = lastRead?.page && lastRead.page > 0 ? ` · pág. ${lastRead.page + 1}` : "";
 
   return (

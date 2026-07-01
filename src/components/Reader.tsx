@@ -41,6 +41,7 @@ export function Reader({ sourceId, sourceName, mangaId, mangaTitle, cover, chapt
   const [currentPage, setCurrentPage] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const savedPageRef = useRef<number>(0);  // página salva para scroll automático
+  const historyDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Carrega as páginas do capítulo
   useEffect(() => {
@@ -65,12 +66,12 @@ export function Reader({ sourceId, sourceName, mangaId, mangaTitle, cover, chapt
         savedPageRef.current = getChapterSavedPage(sourceId, mangaId, chapter.id);
         setPages(loadedPages);
         // Salva no histórico assim que o capítulo carrega
-        if (loadedPages.length > 0 && mangaTitle) {
+        if (loadedPages.length > 0) {
           addToHistory({
             sourceId,
             sourceName: sourceName ?? sourceId,
             mangaId,
-            mangaTitle,
+            mangaTitle: mangaTitle ?? mangaId,
             cover: cover ?? null,
             chapterId: chapter.id,
             chapterNumber: chapter.number,
@@ -106,7 +107,11 @@ export function Reader({ sourceId, sourceName, mangaId, mangaTitle, cover, chapt
         if (visible[0]) {
           const idx = Number((visible[0].target as HTMLElement).dataset.pageIndex);
           setCurrentPage(idx);
-          updateHistoryPage(sourceId, mangaId, chapter.id, idx);
+          // Debounce: só grava no localStorage após 600ms sem novo scroll
+          if (historyDebounceRef.current) clearTimeout(historyDebounceRef.current);
+          historyDebounceRef.current = setTimeout(() => {
+            updateHistoryPage(sourceId, mangaId, chapter.id, idx);
+          }, 600);
         }
       },
       { threshold: 0.4 }

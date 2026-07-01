@@ -43,7 +43,9 @@ export async function GET(request: NextRequest) {
   try {
     const pages = await scraper.getChapterPages(chapterId);
     const response: PagesApiResponse = { pages };
-    return NextResponse.json(response);
+    return NextResponse.json(response, {
+      headers: { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=600" },
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Erro interno ao buscar páginas.";
     return NextResponse.json({ error: message }, { status: 500 });

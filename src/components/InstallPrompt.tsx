@@ -87,11 +87,11 @@ export function InstallPrompt() {
       {/* Modal iOS */}
       {showIOSModal && (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
           onClick={() => setShowIOSModal(false)}
         >
           <div
-            className="bg-zinc-900 border border-zinc-700 rounded-2xl p-5 w-full max-w-sm mb-4 shadow-2xl"
+            className="bg-zinc-900 border border-zinc-700 rounded-2xl p-5 w-full max-w-sm shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-3 mb-4">

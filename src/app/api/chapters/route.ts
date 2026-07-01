@@ -30,7 +30,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Mangá não encontrado." }, { status: 404 });
     }
     const response: ChaptersApiResponse = data;
-    return NextResponse.json(response);
+    return NextResponse.json(response, {
+      headers: { "Cache-Control": "public, s-maxage=1800, stale-while-revalidate=300" },
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Erro interno ao buscar capítulos.";
     return NextResponse.json({ error: message }, { status: 500 });

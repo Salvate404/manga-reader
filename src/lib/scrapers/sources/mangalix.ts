@@ -1,4 +1,3 @@
-import axios from "axios";
 import { BaseScraper } from "../base";
 import type { MangaDetail, MangaSearchResult, ChapterPage } from "@/lib/types";
 
@@ -10,8 +9,11 @@ import type { MangaDetail, MangaSearchResult, ChapterPage } from "@/lib/types";
  */
 
 const BASE = "https://mangalix.com";
-const CDN_MFK = "https://images.mangafreak.me";
-const CDN_LST = "https://scans.lastation.us";
+const CDN_MFK  = "https://images.mangafreak.me";
+const CDN_LST  = "https://scans.lastation.us";
+const CDN_HOT  = "https://scans-hot.planeptune.us";
+const CDN_LOW  = "https://official.lowee.us";
+const CDN_TEMP = "https://temp.compsci88.com";
 const CHAPTERS_URL = `${BASE}/chapters.json`;
 
 interface MLChapter {
@@ -29,17 +31,23 @@ const HEADERS = {
   Referer: `${BASE}/`,
 };
 
-// Cache em memoria - reutilizado entre requests no mesmo processo
+// Cache em memória para reutilização dentro do mesmo processo serverless
 let _cache: ChaptersJson | null = null;
 let _cacheAt = 0;
-const CACHE_TTL = 30 * 60_000; // 30 min
+const CACHE_TTL = 30 * 60_000; // 30 min por processo
 
 async function getChaptersJson(): Promise<ChaptersJson> {
+  // 1. Cache em memória (mesmo processo, hot path)
   if (_cache && Date.now() - _cacheAt < CACHE_TTL) return _cache;
-  const { data } = await axios.get<ChaptersJson>(CHAPTERS_URL, {
+
+  // 2. fetch() nativo com Next.js Data Cache (persiste entre cold starts na Vercel)
+  const res = await fetch(CHAPTERS_URL, {
     headers: HEADERS,
-    timeout: 15_000,
+    next: { revalidate: 1800 }, // 30 min no CDN da Vercel
+    signal: AbortSignal.timeout(15_000),
   });
+  if (!res.ok) throw new Error(`MangaLix chapters.json: HTTP ${res.status}`);
+  const data = (await res.json()) as ChaptersJson;
   _cache = data;
   _cacheAt = Date.now();
   return data;
@@ -59,8 +67,11 @@ function titleFromChapterTitle(ct: string, num: number): string {
 }
 
 function expandUrl(url: string): string {
-  if (url.startsWith("$MFK")) return CDN_MFK + url.slice(4);
-  if (url.startsWith("$LST")) return CDN_LST + url.slice(4);
+  if (url.startsWith("$MFK"))  return CDN_MFK  + url.slice(4);
+  if (url.startsWith("$LST"))  return CDN_LST  + url.slice(4);
+  if (url.startsWith("$HOT"))  return CDN_HOT  + url.slice(4);
+  if (url.startsWith("$LOW"))  return CDN_LOW  + url.slice(4);
+  if (url.startsWith("$TEMP")) return CDN_TEMP + url.slice(5);
   return url;
 }
 

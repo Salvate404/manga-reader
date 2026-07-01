@@ -18,16 +18,18 @@ export function NavigationProgress() {
   // Quando o pathname muda, a navegação terminou → completa e esconde
   useEffect(() => {
     if (!visible) return;
-    // Dentro de setTimeout para não chamar setState síncronamente no effect
-    const id = setTimeout(() => {
+    // Dois timeouts rastreados para limpeza correta (evita update em componente desmontado)
+    const id1 = setTimeout(() => {
       setWidth(100);
-      setTimeout(() => {
+      timerRef.current = setTimeout(() => {
         setVisible(false);
         setWidth(0);
       }, 300);
     }, 0);
-    timerRef.current = id;
-    return () => clearTimeout(id);
+    timerRef.current = id1;
+    return () => {
+      clearTimeout(timerRef.current ?? undefined);
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
 
