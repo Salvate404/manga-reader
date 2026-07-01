@@ -98,6 +98,7 @@ export function NexusReadPage({ sourceId, mangaSlug, chapterSlug }: Props) {
         chapter={chapter}
         prevChapter={prevChapter}
         nextChapter={nextChapter}
+        allChapters={manga.chapters}
       />
     </div>
   );

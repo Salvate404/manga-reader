@@ -60,6 +60,7 @@ export default async function ReadPage({ params }: ReadPageProps) {
         chapter={chapter}
         prevChapter={prevChapter}
         nextChapter={nextChapter}
+        allChapters={manga.chapters}
       />
     </div>
   );

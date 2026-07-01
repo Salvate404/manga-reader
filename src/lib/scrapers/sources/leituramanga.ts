@@ -126,60 +126,111 @@ export class LeituraMangaScraper extends BaseScraper {
   }
 
   async getChapterPages(chapterId: string): Promise<ChapterPage[]> {
-    // chapterId = "mangaSlug__chapterNum"
     const sep = chapterId.indexOf("__");
     if (sep < 0) throw new Error(`chapterId inválido: ${chapterId}`);
     const mangaSlug = chapterId.slice(0, sep);
     const chapNum   = chapterId.slice(sep + 2);
 
-    // A CDN usa dois padrões dependendo da época do upload:
-    //  - Novo: https://cdn.leituramanga.net/{slug}/{num}/page-{n}.webp
-    //  - Antigo: https://cdn.leituramanga.net/{slug}/capitulo-{num}/page-{n}.webp
-    const cdnNew = `${CDN}/${mangaSlug}/${chapNum}`;
-    const cdnOld = `${CDN}/${mangaSlug}/capitulo-${chapNum}`;
-
-    // Detectar padrão ativo testando a página 1 em ambos
-    let cdnBase = cdnNew;
+    // 1. Extrair URLs exatas do HTML embarcado (suporta page-1, page-2-1.webp, etc.)
     try {
-      await axios.head(`${cdnNew}/page-1.webp`, {
-        headers: { Referer: `${BASE}/` },
-        timeout: 6_000,
-      });
+      const { data: html } = await axios.get(
+        `${BASE}/manga/${mangaSlug}/chapter/${chapNum}`,
+        { headers: HEADERS, timeout: 20_000, responseType: "text" }
+      );
+      const pages = extractChapterImagesFromHtml(String(html), mangaSlug, chapNum);
+      if (pages.length > 0) return pages;
     } catch {
-      // Novo falhou — tentar antigo
+      // fallback para probing CDN abaixo
+    }
+
+    // 2. Fallback: probing CDN (obras antigas com padrão fixo)
+    return probeCdnPages(mangaSlug, chapNum);
+  }
+}
+
+/** Extrai array de imagens do payload RSC embarcado na página do capítulo. */
+function extractChapterImagesFromHtml(
+  html: string,
+  mangaSlug: string,
+  chapNum: string
+): ChapterPage[] {
+  const escaped = html.match(/\\"images\\":(\[[\s\S]*?\])[,\\]/);
+  if (escaped) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const arr: any[] = JSON.parse(escaped[1].replace(/\\"/g, '"'));
+      if (Array.isArray(arr) && arr.length > 0) {
+        return arr.map((img, i) => ({
+          index:    i,
+          imageUrl: `${CDN}/${img.url as string}`,
+          width:    img.width as number | undefined,
+          height:   img.height as number | undefined,
+        }));
+      }
+    } catch {
+      // continua para fallback regex
+    }
+  }
+
+  const re = new RegExp(
+    `${mangaSlug.replace(/-/g, "\\-")}/capitulo-${String(chapNum).replace(".", "\\.")}/page[^"\\\\]+`,
+    "g"
+  );
+  const paths = [...new Set([...html.matchAll(re)].map((m) => m[0]))];
+  paths.sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+
+  return paths.map((p, i) => ({
+    index: i,
+    imageUrl: `${CDN}/${p}`,
+  }));
+}
+
+/** Probing CDN legado — usado quando o HTML não traz metadados. */
+async function probeCdnPages(mangaSlug: string, chapNum: string): Promise<ChapterPage[]> {
+  const cdnNew = `${CDN}/${mangaSlug}/${chapNum}`;
+  const cdnOld = `${CDN}/${mangaSlug}/capitulo-${chapNum}`;
+
+  async function firstPageUrl(base: string): Promise<string | null> {
+    for (const name of ["page-1.webp", "page-1"]) {
       try {
-        await axios.head(`${cdnOld}/page-1.webp`, {
+        await axios.head(`${base}/${name}`, {
           headers: { Referer: `${BASE}/` },
           timeout: 6_000,
         });
-        cdnBase = cdnOld;
-      } catch {
-        // Nenhum padrão respondeu — capítulo pode não estar no CDN ainda
-        throw new Error(`Capítulo ainda não disponível no CDN para ${mangaSlug} cap. ${chapNum}`);
-      }
+        return name;
+      } catch { /* tenta próximo */ }
     }
-
-    // Probing paralelo das demais páginas
-    const MAX = 60;
-    const checks = Array.from({ length: MAX }, (_, i) => i + 2).map(
-      async (p): Promise<ChapterPage | null> => {
-        const url = `${cdnBase}/page-${p}.webp`;
-        try {
-          await axios.head(url, {
-            headers: { Referer: `${BASE}/` },
-            timeout: 5_000,
-          });
-          return { index: p - 1, imageUrl: url };
-        } catch {
-          return null;
-        }
-      }
-    );
-
-    const rest = await Promise.all(checks);
-    return [
-      { index: 0, imageUrl: `${cdnBase}/page-1.webp` },
-      ...rest.filter((r): r is ChapterPage => r !== null),
-    ];
+    return null;
   }
+
+  let cdnBase = cdnNew;
+  let page1Name = await firstPageUrl(cdnNew);
+  if (!page1Name) {
+    page1Name = await firstPageUrl(cdnOld);
+    if (page1Name) cdnBase = cdnOld;
+  }
+  if (!page1Name) {
+    throw new Error(`Capítulo ainda não disponível para ${mangaSlug} cap. ${chapNum}`);
+  }
+
+  const ext = page1Name.endsWith(".webp") ? ".webp" : "";
+  const MAX = 80;
+  const checks = Array.from({ length: MAX }, (_, i) => i + 2).map(
+    async (p): Promise<ChapterPage | null> => {
+      for (const name of [`page-${p}${ext}`, `page-${p}`]) {
+        const url = `${cdnBase}/${name}`;
+        try {
+          await axios.head(url, { headers: { Referer: `${BASE}/` }, timeout: 5_000 });
+          return { index: p - 1, imageUrl: url };
+        } catch { /* tenta sem extensão */ }
+      }
+      return null;
+    }
+  );
+
+  const rest = await Promise.all(checks);
+  return [
+    { index: 0, imageUrl: `${cdnBase}/${page1Name}` },
+    ...rest.filter((r): r is ChapterPage => r !== null),
+  ];
 }

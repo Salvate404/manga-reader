@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { ProxyImage } from "@/components/ProxyImage";
+import { ReaderNavBar } from "@/components/ReaderNavBar";
 import type { ChapterPage, Chapter } from "@/lib/types";
 import { addToHistory, updateHistoryPage, getChapterSavedPage } from "@/lib/history";
 
@@ -14,6 +15,7 @@ interface ReaderProps {
   chapter: Chapter;
   prevChapter?: Chapter;
   nextChapter?: Chapter;
+  allChapters?: Chapter[];
 }
 
 /** Imagem individual de página — se falhar ao carregar, some do layout */
@@ -34,7 +36,7 @@ function PageImage({ page, sourceId }: { page: ChapterPage; sourceId: string }) 
   );
 }
 
-export function Reader({ sourceId, sourceName, mangaId, mangaTitle, cover, chapter, prevChapter, nextChapter }: ReaderProps) {
+export function Reader({ sourceId, sourceName, mangaId, mangaTitle, cover, chapter, prevChapter, nextChapter, allChapters = [] }: ReaderProps) {
   const [pages, setPages] = useState<ChapterPage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -120,6 +122,10 @@ export function Reader({ sourceId, sourceName, mangaId, mangaTitle, cover, chapt
     return () => observer.disconnect();
   }, [pages, sourceId, mangaId, chapter.id]);
 
+  const scrollToTop = useCallback(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4">
@@ -177,8 +183,8 @@ export function Reader({ sourceId, sourceName, mangaId, mangaTitle, cover, chapt
         ))}
       </div>
 
-      {/* Navegação entre capítulos */}
-      <div className="flex gap-3 p-4 bg-zinc-900 border-t border-zinc-800">
+      {/* Navegação entre capítulos (rodapé estático) */}
+      <div className="flex gap-3 p-4 pb-24 bg-zinc-900 border-t border-zinc-800">
         {prevChapter ? (
           <a
             href={`/read/${sourceId}/${mangaId}/${prevChapter.id}`}
@@ -202,6 +208,16 @@ export function Reader({ sourceId, sourceName, mangaId, mangaTitle, cover, chapt
           </div>
         )}
       </div>
+
+      <ReaderNavBar
+        sourceId={sourceId}
+        mangaId={mangaId}
+        chapter={chapter}
+        prevChapter={prevChapter}
+        nextChapter={nextChapter}
+        allChapters={allChapters}
+        onScrollTop={scrollToTop}
+      />
     </div>
   );
 }
