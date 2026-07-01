@@ -3,11 +3,14 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { ProxyImage } from "@/components/ProxyImage";
 import type { ChapterPage, Chapter } from "@/lib/types";
-import { updateHistoryPage } from "@/lib/history";
+import { addToHistory, updateHistoryPage, getChapterSavedPage } from "@/lib/history";
 
 interface ReaderProps {
   sourceId: string;
+  sourceName?: string;
   mangaId: string;
+  mangaTitle?: string;
+  cover?: string | null;
   chapter: Chapter;
   prevChapter?: Chapter;
   nextChapter?: Chapter;
@@ -31,12 +34,13 @@ function PageImage({ page, sourceId }: { page: ChapterPage; sourceId: string }) 
   );
 }
 
-export function Reader({ sourceId, mangaId, chapter, prevChapter, nextChapter }: ReaderProps) {
+export function Reader({ sourceId, sourceName, mangaId, mangaTitle, cover, chapter, prevChapter, nextChapter }: ReaderProps) {
   const [pages, setPages] = useState<ChapterPage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
+  const savedPageRef = useRef<number>(0);  // página salva para scroll automático
 
   // Carrega as páginas do capítulo
   useEffect(() => {
@@ -55,10 +59,40 @@ export function Reader({ sourceId, mangaId, chapter, prevChapter, nextChapter }:
         if (!res.ok) throw new Error("Erro ao carregar páginas");
         return res.json();
       })
-      .then((data) => setPages(data.pages ?? []))
+      .then((data) => {
+        const loadedPages = data.pages ?? [];
+        // Lê a página salva ANTES de chamar addToHistory (que atualiza readAt)
+        savedPageRef.current = getChapterSavedPage(sourceId, mangaId, chapter.id);
+        setPages(loadedPages);
+        // Salva no histórico assim que o capítulo carrega
+        if (loadedPages.length > 0 && mangaTitle) {
+          addToHistory({
+            sourceId,
+            sourceName: sourceName ?? sourceId,
+            mangaId,
+            mangaTitle,
+            cover: cover ?? null,
+            chapterId: chapter.id,
+            chapterNumber: chapter.number,
+            chapterTitle: chapter.title,
+          });
+        }
+      })
       .catch((err) => setError(err.message))
       .finally(() => setIsLoading(false));
-  }, [sourceId, chapter.id]);
+  }, [sourceId, sourceName, mangaId, mangaTitle, cover, chapter.id, chapter.number, chapter.title]);
+
+  // Scroll para a página salva ao reabrir o mesmo capítulo
+  useEffect(() => {
+    const target = savedPageRef.current;
+    if (pages.length === 0 || target === 0) return;
+    // Aguarda o DOM renderizar as imagens antes de fazer scroll
+    const id = setTimeout(() => {
+      const el = containerRef.current?.querySelector(`[data-page-index="${target}"]`);
+      el?.scrollIntoView({ behavior: "instant", block: "start" });
+    }, 80);
+    return () => clearTimeout(id);
+  }, [pages]);
 
   // Rastreia a página atual via IntersectionObserver
   useEffect(() => {

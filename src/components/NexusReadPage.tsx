@@ -91,7 +91,10 @@ export function NexusReadPage({ sourceId, mangaSlug, chapterSlug }: Props) {
 
       <Reader
         sourceId={sourceId}
+        sourceName="Nexus Toons"
         mangaId={mangaSlug}
+        mangaTitle={manga.title}
+        cover={manga.cover}
         chapter={chapter}
         prevChapter={prevChapter}
         nextChapter={nextChapter}

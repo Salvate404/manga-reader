@@ -10,6 +10,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ChapterList } from "@/components/ChapterList";
 import { ProxyImage } from "@/components/ProxyImage";
+import { MangaReadButtons } from "@/components/MangaReadButtons";
 import { resolveImageUrl } from "@/lib/image-url";
 import type { ChaptersApiResponse, MangaDetail } from "@/lib/types";
 
@@ -98,17 +99,12 @@ export function NexusMangaPage({ sourceId, mangaSlug }: Props) {
                 </span>
               )}
             </div>
-            {firstChapter && (
-              <Link
-                href={`/read/${sourceId}/${mangaSlug}/${firstChapter.id}`}
-                className="mt-3 inline-flex items-center justify-center gap-2 bg-red-600 hover:bg-red-500 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M8 5.14v14l11-7-11-7z" />
-                </svg>
-                Ler do início
-              </Link>
-            )}
+            {/* Botões Ler — inclui 'Continuar' se houver histórico */}
+            <MangaReadButtons
+              sourceId={sourceId}
+              mangaId={mangaSlug}
+              firstChapterId={firstChapter?.id}
+            />
           </div>
         </div>
       </div>

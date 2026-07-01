@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { InstallPrompt } from "@/components/InstallPrompt";
 
 export function Navbar() {
   const pathname = usePathname();
@@ -23,6 +24,7 @@ export function Navbar() {
 
         {/* Nav */}
         <nav className="flex items-center gap-1">
+          <InstallPrompt />
           <NavLink href="/" active={pathname === "/"}>Início</NavLink>
           <NavLink href="/sources" active={pathname === "/sources"}>Fontes</NavLink>
         </nav>

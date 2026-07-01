@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Reader } from "@/components/Reader";
 import { NexusReadPage } from "@/components/NexusReadPage";
 import { getMangaChapters } from "@/lib/manga-service";
+import { getScraperById } from "@/lib/scrapers/registry";
 
 interface ReadPageProps {
   params: Promise<{ sourceId: string; mangaSlug: string; chapterSlug: string }>;
@@ -52,7 +53,10 @@ export default async function ReadPage({ params }: ReadPageProps) {
 
       <Reader
         sourceId={sourceId}
+        sourceName={getScraperById(sourceId)?.sourceName}
         mangaId={mangaSlug}
+        mangaTitle={manga.title}
+        cover={manga.cover}
         chapter={chapter}
         prevChapter={prevChapter}
         nextChapter={nextChapter}
