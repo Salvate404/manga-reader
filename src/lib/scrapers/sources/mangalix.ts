@@ -11,6 +11,7 @@ import type { MangaDetail, MangaSearchResult, ChapterPage } from "@/lib/types";
 
 const BASE = "https://mangalix.com";
 const CDN_MFK = "https://images.mangafreak.me";
+const CDN_LST = "https://scans.lastation.us";
 const CHAPTERS_URL = `${BASE}/chapters.json`;
 
 interface MLChapter {
@@ -58,7 +59,9 @@ function titleFromChapterTitle(ct: string, num: number): string {
 }
 
 function expandUrl(url: string): string {
-  return url.startsWith("$MFK") ? CDN_MFK + url.slice(4) : url;
+  if (url.startsWith("$MFK")) return CDN_MFK + url.slice(4);
+  if (url.startsWith("$LST")) return CDN_LST + url.slice(4);
+  return url;
 }
 
 export class MangaLixScraper extends BaseScraper {

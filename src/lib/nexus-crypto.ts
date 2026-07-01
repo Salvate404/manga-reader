@@ -85,20 +85,27 @@ async function getKeys(): Promise<OrionKey[]> {
 export async function processOrionResponse<T>(data: unknown): Promise<T> {
   if (!data || typeof data !== "object") return data as T;
   const d = data as Record<string, unknown>;
-  if (
-    typeof d.d === "string" &&
-    typeof d.k === "number" &&
-    typeof d.v === "number" &&
-    (d.v === 1 || d.v === 2)
-  ) {
-    const keys = await getKeys();
-    const keyIndex = d.v === 1 ? 0 : (d.k as number) || 0;
+  if (typeof d.d !== "string" || typeof d.k !== "number" || typeof d.v !== "number") {
+    return data as T;
+  }
+
+  const keys = await getKeys();
+
+  // v=1 usa key 0; v=2 usa key d.k; outras versões também tentam d.k primeiro.
+  // Tenta o índice primário e depois todos os outros para garantir robustez.
+  const primary = d.v === 1 ? 0 : ((d.k as number) % keys.length);
+  const fallbacks = Array.from({ length: keys.length }, (_, i) => i).filter((i) => i !== primary);
+  const order = [primary, ...fallbacks];
+
+  for (const keyIndex of order) {
     try {
       const decrypted = orionDecrypt(keyIndex, d.d as string, keys);
       return JSON.parse(decrypted) as T;
     } catch {
-      return data as T;
+      // Tenta próximo índice
     }
   }
+
+  // Não foi possível decriptar — retorna dado bruto
   return data as T;
 }

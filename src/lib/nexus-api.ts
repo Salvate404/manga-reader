@@ -125,7 +125,10 @@ export async function fetchNexusTrending(limit = 10): Promise<MangaSearchResult[
 }
 
 export async function fetchNexusMangaDetail(mangaId: string): Promise<ChaptersApiResponse> {
-  const manga = await nexusFetch<NexusManga>(`/manga/${mangaId}`);
+  const raw = await nexusFetch<NexusManga | { data?: NexusManga }>(`/manga/${mangaId}`);
+  // A API pode retornar NexusManga diretamente ou embrulhado em { data: NexusManga }
+  const wrapped = raw as { data?: NexusManga };
+  const manga: NexusManga = wrapped.data?.title ? wrapped.data : (raw as NexusManga);
   if (!manga?.title || !manga.slug) {
     throw new Error(`Mangá não encontrado no NexusToons: ${mangaId}`);
   }
