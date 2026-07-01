@@ -20,7 +20,8 @@ interface NexusManga {
   description?: string;
   author?: string;
   artist?: string;
-  categories?: { category: { name: string } }[];
+  // Endpoint lista: { category: { name } }; Endpoint detalhe: { name, slug, ... } (flat)
+  categories?: ({ category?: { name: string }; name?: string })[];
   chapters?: { id: number; number: string; title?: string; createdAt?: string }[];
 }
 
@@ -71,7 +72,7 @@ function toSearchResult(m: NexusManga): MangaSearchResult {
     url: `${BASE}/manga/${m.slug}`,
     chapterCount: m.chapterCount,
     status: mapStatus(m.status),
-    genres: m.categories?.map((c) => c.category.name) ?? [],
+    genres: m.categories?.map((c) => c.category?.name ?? c.name ?? "").filter(Boolean) ?? [],
   };
 }
 
@@ -151,7 +152,7 @@ export async function fetchNexusMangaDetail(mangaId: string): Promise<ChaptersAp
       cover: manga.coverImage ?? null,
       description: manga.description,
       status: mapStatus(manga.status),
-      genres: manga.categories?.map((c) => c.category.name) ?? [],
+      genres: manga.categories?.map((c) => c.category?.name ?? c.name ?? "").filter(Boolean) ?? [],
       author: manga.author,
       artist: manga.artist,
       chapters,

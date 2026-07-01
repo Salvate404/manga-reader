@@ -15,7 +15,7 @@ interface NexusManga {
   author?: string;
   artist?: string;
   chapterCount?: number;
-  categories?: { category: { name: string } }[];
+  categories?: ({ category?: { name: string }; name?: string })[];
   chapters?: NexusChapter[];
 }
 
@@ -99,7 +99,7 @@ export class NexusToonsScraper extends BaseScraper {
       throw new Error(`Mangá não encontrado no NexusToons: ${mangaId}`);
     }
 
-    const genres = manga.categories?.map((c) => c.category.name) ?? [];
+    const genres = manga.categories?.map((c) => c.category?.name ?? c.name ?? "").filter(Boolean) ?? [];
 
     const chapters = (manga.chapters ?? [])
       .sort((a, b) => parseFloat(b.number) - parseFloat(a.number))
@@ -152,7 +152,7 @@ export class NexusToonsScraper extends BaseScraper {
       url:          `${BASE}/manga/${m.slug}`,
       chapterCount: m.chapterCount,
       status:       mapStatus(m.status),
-      genres:       m.categories?.map((c) => c.category.name) ?? [],
+      genres:       m.categories?.map((c) => c.category?.name ?? c.name ?? "").filter(Boolean) ?? [],
     };
   }
 }
