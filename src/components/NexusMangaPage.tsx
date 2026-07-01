@@ -1,65 +1,85 @@
+"use client";
+
+/**
+ * Versão client-side da página de detalhes de mangá para o NexusToons.
+ * Chama a rota Edge /api/nexus/manga/[slug] diretamente do browser,
+ * contornando o salto serverless→edge que falha na Vercel.
+ */
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { ChapterList } from "@/components/ChapterList";
 import { ProxyImage } from "@/components/ProxyImage";
-import { NexusMangaPage } from "@/components/NexusMangaPage";
-import { getMangaChapters } from "@/lib/manga-service";
 import { resolveImageUrl } from "@/lib/image-url";
+import type { ChaptersApiResponse, MangaDetail } from "@/lib/types";
 
-interface MangaPageProps {
-  params: Promise<{ sourceId: string; mangaSlug: string }>;
+const STATUS_LABEL: Record<string, string> = {
+  ongoing: "Em andamento",
+  completed: "Completo",
+  hiatus: "Hiato",
+  unknown: "Desconhecido",
+};
+
+interface Props {
+  sourceId: string;
+  mangaSlug: string;
 }
 
-export const maxDuration = 30;
+export function NexusMangaPage({ sourceId, mangaSlug }: Props) {
+  const [manga, setManga] = useState<MangaDetail | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
 
-export default async function MangaPage({ params }: MangaPageProps) {
-  const { sourceId, mangaSlug } = await params;
+  useEffect(() => {
+    fetch(`/api/nexus/manga/${encodeURIComponent(mangaSlug)}`)
+      .then((res) => (res.ok ? (res.json() as Promise<ChaptersApiResponse>) : null))
+      .then((data) => {
+        if (!data?.manga) {
+          setNotFound(true);
+        } else {
+          setManga(data.manga);
+        }
+      })
+      .catch(() => setNotFound(true))
+      .finally(() => setIsLoading(false));
+  }, [mangaSlug]);
 
-  // NexusToons: usa client component que chama a rota Edge diretamente
-  if (sourceId === "nexustoons") {
-    return <NexusMangaPage sourceId={sourceId} mangaSlug={mangaSlug} />;
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="w-8 h-8 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
   }
 
-  const data = await getMangaChapters(sourceId, mangaSlug);
+  if (notFound || !manga) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3 px-4">
+        <p className="text-zinc-400 text-sm text-center">Mangá não encontrado.</p>
+        <Link href="/" className="text-red-400 text-sm hover:underline">
+          Voltar ao início
+        </Link>
+      </div>
+    );
+  }
 
-  if (!data) notFound();
-
-  const { manga } = data;
-  const firstChapter = manga.chapters.at(-1); // geralmente em ordem decrescente
+  const firstChapter = manga.chapters.at(-1);
   const lastChapter = manga.chapters.at(0);
-
-  const STATUS_LABEL: Record<string, string> = {
-    ongoing: "Em andamento",
-    completed: "Completo",
-    hiatus: "Hiato",
-    unknown: "Desconhecido",
-  };
 
   return (
     <div className="max-w-3xl mx-auto page-enter">
-      {/* Header do mangá */}
+      {/* Header */}
       <div className="relative">
-        {/* Fundo desfocado com a capa */}
         {manga.cover && (
           <div
             className="absolute inset-0 opacity-10 bg-cover bg-center blur-2xl scale-110"
-            style={{
-              backgroundImage: `url('${resolveImageUrl(manga.cover, sourceId)}')`,
-            }}
+            style={{ backgroundImage: `url('${resolveImageUrl(manga.cover, sourceId)}')` }}
           />
         )}
-
         <div className="relative px-4 pt-6 pb-4 flex gap-4">
-          {/* Capa */}
           <div className="relative w-[110px] h-[160px] flex-shrink-0 rounded-xl overflow-hidden bg-zinc-800 shadow-xl">
             {manga.cover ? (
-              <ProxyImage
-                src={manga.cover}
-                sourceId={sourceId}
-                alt={manga.title}
-                fill
-                priority
-              />
+              <ProxyImage src={manga.cover} sourceId={sourceId} alt={manga.title} fill priority />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-zinc-600">
                 <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -68,31 +88,23 @@ export default async function MangaPage({ params }: MangaPageProps) {
               </div>
             )}
           </div>
-
-          {/* Metadados */}
           <div className="flex-1 min-w-0 flex flex-col justify-between">
             <div>
-              <h1 className="text-white font-bold text-lg leading-tight mb-1">
-                {manga.title}
-              </h1>
-              {manga.author && (
-                <p className="text-zinc-400 text-sm">{manga.author}</p>
-              )}
+              <h1 className="text-white font-bold text-lg leading-tight mb-1">{manga.title}</h1>
+              {manga.author && <p className="text-zinc-400 text-sm">{manga.author}</p>}
               {manga.status && manga.status !== "unknown" && (
                 <span className="inline-block mt-2 text-xs font-medium bg-zinc-700 text-zinc-300 px-2 py-0.5 rounded">
                   {STATUS_LABEL[manga.status]}
                 </span>
               )}
             </div>
-
-            {/* Botão Ler */}
             {firstChapter && (
               <Link
                 href={`/read/${sourceId}/${mangaSlug}/${firstChapter.id}`}
                 className="mt-3 inline-flex items-center justify-center gap-2 bg-red-600 hover:bg-red-500 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M8 5.14v14l11-7-11-7z"/>
+                  <path d="M8 5.14v14l11-7-11-7z" />
                 </svg>
                 Ler do início
               </Link>
@@ -101,16 +113,12 @@ export default async function MangaPage({ params }: MangaPageProps) {
         </div>
       </div>
 
-      {/* Descrição */}
       {manga.description && (
         <div className="px-4 py-3">
-          <p className="text-zinc-400 text-sm leading-relaxed line-clamp-3">
-            {manga.description}
-          </p>
+          <p className="text-zinc-400 text-sm leading-relaxed line-clamp-3">{manga.description}</p>
         </div>
       )}
 
-      {/* Gêneros */}
       {manga.genres && manga.genres.length > 0 && (
         <div className="px-4 pb-3 flex flex-wrap gap-1.5">
           {manga.genres.map((genre) => (
@@ -121,30 +129,20 @@ export default async function MangaPage({ params }: MangaPageProps) {
         </div>
       )}
 
-      {/* Stats rápidos */}
       <div className="px-4 pb-4 grid grid-cols-2 gap-2">
         <div className="bg-zinc-800/60 rounded-xl p-3 text-center">
           <p className="text-white font-bold text-lg">{manga.chapters.length}</p>
           <p className="text-zinc-500 text-xs">Capítulos</p>
         </div>
         <div className="bg-zinc-800/60 rounded-xl p-3 text-center">
-          <p className="text-white font-bold text-lg truncate">
-            {lastChapter?.number ?? "—"}
-          </p>
+          <p className="text-white font-bold text-lg truncate">{lastChapter?.number ?? "—"}</p>
           <p className="text-zinc-500 text-xs">Último cap.</p>
         </div>
       </div>
 
-      {/* Lista de capítulos */}
       <div className="px-4 pb-8">
-        <h2 className="text-zinc-400 text-sm font-medium uppercase tracking-wider mb-3">
-          Capítulos
-        </h2>
-        <ChapterList
-          sourceId={sourceId}
-          mangaId={mangaSlug}
-          chapters={manga.chapters}
-        />
+        <h2 className="text-zinc-400 text-sm font-medium uppercase tracking-wider mb-3">Capítulos</h2>
+        <ChapterList sourceId={sourceId} mangaId={mangaSlug} chapters={manga.chapters} />
       </div>
     </div>
   );

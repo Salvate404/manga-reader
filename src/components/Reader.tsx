@@ -44,7 +44,13 @@ export function Reader({ sourceId, mangaId, chapter, prevChapter, nextChapter }:
     setError(null);
     setPages([]);
 
-    fetch(`/api/pages?sourceId=${sourceId}&chapterId=${encodeURIComponent(chapter.id)}`)
+    // NexusToons: chama a rota Edge diretamente do browser (evita bloqueio de IP na serverless)
+    const endpoint =
+      sourceId === "nexustoons"
+        ? `/api/nexus/chapter/${encodeURIComponent(chapter.id)}`
+        : `/api/pages?sourceId=${sourceId}&chapterId=${encodeURIComponent(chapter.id)}`;
+
+    fetch(endpoint)
       .then((res) => {
         if (!res.ok) throw new Error("Erro ao carregar páginas");
         return res.json();

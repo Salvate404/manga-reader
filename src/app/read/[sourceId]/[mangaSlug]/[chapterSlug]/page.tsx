@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Reader } from "@/components/Reader";
+import { NexusReadPage } from "@/components/NexusReadPage";
 import { getMangaChapters } from "@/lib/manga-service";
 
 interface ReadPageProps {
@@ -11,6 +12,12 @@ export const maxDuration = 30;
 
 export default async function ReadPage({ params }: ReadPageProps) {
   const { sourceId, mangaSlug, chapterSlug } = await params;
+
+  // NexusToons: usa client component que chama rotas Edge diretamente
+  if (sourceId === "nexustoons") {
+    return <NexusReadPage sourceId={sourceId} mangaSlug={mangaSlug} chapterSlug={chapterSlug} />;
+  }
+
   const data = await getMangaChapters(sourceId, mangaSlug);
 
   if (!data) notFound();

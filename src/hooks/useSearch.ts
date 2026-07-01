@@ -49,22 +49,50 @@ export function useSearch() {
 
     // Cancela busca anterior se ainda estiver pendente
     abortRef.current?.abort();
-    abortRef.current = new AbortController();
+    const controller = new AbortController();
+    abortRef.current = controller;
 
     setIsLoading(true);
     setError(null);
     setHasSearched(true);
 
     try {
+      // Nexus Toons usa rota Edge diretamente do browser (serverless→edge falha na Vercel)
+      const sourceList = sourcesParam ? sourcesParam.split(",") : null;
+      const includeNexus = !sourceList || sourceList.includes("nexustoons");
+
       const url = new URL("/api/search", location.origin);
       url.searchParams.set("q", trimmed);
       if (sourcesParam) url.searchParams.set("sources", sourcesParam);
 
-      const res = await fetch(url.toString(), { signal: abortRef.current.signal });
-      if (!res.ok) throw new Error("Erro ao buscar mangás");
-      const json: SearchApiResponse = await res.json();
-      setResults(json.results);
-      writeCache(key, json.results);
+      const tasks: Promise<MangaSearchResult[]>[] = [
+        fetch(url.toString(), { signal: controller.signal })
+          .then((res) => {
+            if (!res.ok) throw new Error("Erro ao buscar mangás");
+            return res.json() as Promise<SearchApiResponse>;
+          })
+          .then((json) => json.results),
+      ];
+
+      if (includeNexus) {
+        tasks.push(
+          fetch(`/api/search/nexus?q=${encodeURIComponent(trimmed)}`, {
+            signal: controller.signal,
+          })
+            .then((res) => (res.ok ? res.json() : { results: [] }))
+            .then((json: { results?: MangaSearchResult[] }) => json.results ?? [])
+            .catch(() => [] as MangaSearchResult[])
+        );
+      }
+
+      const settled = await Promise.allSettled(tasks);
+      const combined: MangaSearchResult[] = [];
+      for (const r of settled) {
+        if (r.status === "fulfilled") combined.push(...r.value);
+      }
+
+      setResults(combined);
+      writeCache(key, combined);
     } catch (err) {
       if (err instanceof Error && err.name === "AbortError") return;
       setError(err instanceof Error ? err.message : "Erro desconhecido");
