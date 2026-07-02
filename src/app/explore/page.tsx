@@ -9,6 +9,34 @@ import { BROWSE_GENRES } from "@/lib/genres";
 import Link from "next/link";
 
 const BLOCK_SIZE = 36; // 12 rows x 3 columns
+const EXPLORE_CACHE_KEY = "manga_explore_cache";
+const EXPLORE_CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
+
+function getExploreCacheKey(sources: string, page: number): string {
+  return `${EXPLORE_CACHE_KEY}__${sources}__page${page}`;
+}
+
+function readExploreCache(key: string): { results: any[]; total: number; timestamp: number } | null {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const cached = JSON.parse(raw);
+    const now = Date.now();
+    if (now - cached.timestamp > EXPLORE_CACHE_DURATION) {
+      localStorage.removeItem(key);
+      return null;
+    }
+    return cached;
+  } catch {
+    return null;
+  }
+}
+
+function writeExploreCache(key: string, results: any[], total: number): void {
+  try {
+    localStorage.setItem(key, JSON.stringify({ results, total, timestamp: Date.now() }));
+  } catch {}
+}
 
 export default function ExplorePage() {
   const { query, setQuery, results, isLoading, error, hasSearched, search } = useSearch();
@@ -36,17 +64,26 @@ export default function ExplorePage() {
 
   function loadExplorePage(page: number) {
     setExploreLoading(true);
+    const cacheKey = getExploreCacheKey(sourcesParam || "all", page);
+
+    // Check cache first
+    const cached = readExploreCache(cacheKey);
+    if (cached) {
+      setExploreResults(cached.results);
+      setExploreTotal(cached.total);
+      setExplorePage(page);
+      setExploreLoading(false);
+      return;
+    }
+
     const url = `/api/explore?page=${page}${sourcesParam ? `&sources=${sourcesParam}` : ""}`;
     fetch(url)
       .then((res) => res.json())
       .then((data) => {
-        if (page === 1) {
-          setExploreResults(data.results);
-        } else {
-          setExploreResults((prev) => [...prev, ...data.results]);
-        }
+        setExploreResults(data.results);
         setExploreTotal(data.total);
         setExplorePage(page);
+        writeExploreCache(cacheKey, data.results, data.total);
       })
       .catch((err) => console.error("Error loading explore:", err))
       .finally(() => setExploreLoading(false));
