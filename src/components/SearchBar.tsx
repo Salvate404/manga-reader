@@ -99,10 +99,10 @@ export function SearchBar({
           <span className="text-zinc-500 text-xs font-medium shrink-0">Gênero:</span>
           <button
             onClick={() => onSelectGenre(null)}
-            className={`text-xs px-2.5 py-1 rounded-full border transition-all ${
+            className={`text-xs px-3 py-1.5 rounded-lg border transition-all font-medium ${
               selectedGenre === null
-                ? "bg-zinc-700 border-zinc-500 text-white"
-                : "bg-transparent border-zinc-700/50 text-zinc-500 hover:text-zinc-400"
+                ? "bg-zinc-700 border-zinc-500 text-white shadow-sm"
+                : "bg-zinc-800/30 border-zinc-700/50 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-300"
             }`}
           >
             Todos
@@ -117,10 +117,10 @@ export function SearchBar({
                   onBrowseGenre?.(genre);
                 }
               }}
-              className={`text-xs px-2.5 py-1 rounded-full border transition-all ${
+              className={`text-xs px-3 py-1.5 rounded-lg border transition-all font-medium ${
                 selectedGenre === genre
-                  ? "bg-violet-600/20 border-violet-500/60 text-violet-300"
-                  : "bg-transparent border-zinc-700/50 text-zinc-500 hover:border-zinc-600 hover:text-zinc-400"
+                  ? "bg-gradient-to-r from-violet-600/20 to-purple-600/20 border-violet-500/60 text-violet-300 shadow-sm"
+                  : "bg-zinc-800/30 border-zinc-700/50 text-zinc-400 hover:bg-zinc-800 hover:border-zinc-600 hover:text-zinc-300"
               }`}
             >
               {genre}

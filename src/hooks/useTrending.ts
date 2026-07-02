@@ -3,6 +3,38 @@
 import { useState, useEffect } from "react";
 import type { TrendingSection } from "@/lib/trending-service";
 
+const TRENDING_CACHE_KEY = "manga_trending_cache";
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+function getCachedTrending(): TrendingSection[] | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(TRENDING_CACHE_KEY);
+    if (!raw) return null;
+    const cached = JSON.parse(raw) as { data: TrendingSection[]; timestamp: number };
+    const now = Date.now();
+    if (now - cached.timestamp > CACHE_DURATION) {
+      localStorage.removeItem(TRENDING_CACHE_KEY);
+      return null;
+    }
+    return cached.data;
+  } catch {
+    return null;
+  }
+}
+
+function setCachedTrending(data: TrendingSection[]): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(
+      TRENDING_CACHE_KEY,
+      JSON.stringify({ data, timestamp: Date.now() })
+    );
+  } catch {
+    // Ignore storage errors
+  }
+}
+
 export function useTrending() {
   const [sections, setSections] = useState<TrendingSection[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -10,6 +42,13 @@ export function useTrending() {
 
   useEffect(() => {
     let cancelled = false;
+
+    // Try to load from cache first
+    const cached = getCachedTrending();
+    if (cached) {
+      setSections(cached);
+      setIsLoading(false);
+    }
 
     // Busca fontes regulares + Nexus em paralelo; Nexus usa rota Edge diretamente
     // (evita o salto serverless→edge que falha silenciosamente na Vercel)
@@ -32,7 +71,9 @@ export function useTrending() {
 
     Promise.all([mainFetch, nexusFetch]).then(([mainSections, nexusSections]) => {
       if (!cancelled) {
-        setSections([...mainSections, ...nexusSections]);
+        const allSections = [...mainSections, ...nexusSections];
+        setSections(allSections);
+        setCachedTrending(allSections);
         setIsLoading(false);
       }
     });

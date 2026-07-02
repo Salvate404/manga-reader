@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import type { Chapter } from "@/lib/types";
 
@@ -25,10 +25,12 @@ export function ReaderNavBar({
 }: ReaderNavBarProps) {
   const [visible, setVisible] = useState(false);
   const [listOpen, setListOpen] = useState(false);
+  const chapterListRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let lastY = window.scrollY;
     let ticking = false;
+    let lockVisible = false;
 
     const onScroll = () => {
       if (ticking) return;
@@ -36,8 +38,17 @@ export function ReaderNavBar({
       requestAnimationFrame(() => {
         const y = window.scrollY;
         const scrollingUp = y < lastY - 8;
+        const scrollingDown = y > lastY + 8;
         const nearTop = y < 80;
-        setVisible(scrollingUp && !nearTop);
+
+        // Lock visible when scrolling up significantly, unlock when scrolling down
+        if (scrollingUp && !nearTop) {
+          lockVisible = true;
+        } else if (scrollingDown) {
+          lockVisible = false;
+        }
+
+        setVisible(lockVisible && !nearTop);
         lastY = y;
         ticking = false;
       });
@@ -49,6 +60,34 @@ export function ReaderNavBar({
 
   const closeList = useCallback(() => setListOpen(false), []);
 
+  const goBack = useCallback(() => {
+    if (window.history.length > 1) {
+      window.history.back();
+    }
+  }, []);
+
+  const goForward = useCallback(() => {
+    if (window.history.length > 1) {
+      window.history.forward();
+    }
+  }, []);
+
+  // Scroll to current chapter when list opens
+  useEffect(() => {
+    if (listOpen && chapterListRef.current) {
+      const currentChapterIndex = allChapters.findIndex(ch => ch.id === chapter.id);
+      if (currentChapterIndex >= 0) {
+        const chapterElements = chapterListRef.current.querySelectorAll('a[href]');
+        const targetElement = chapterElements[currentChapterIndex];
+        if (targetElement) {
+          setTimeout(() => {
+            targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 100);
+        }
+      }
+    }
+  }, [listOpen, allChapters, chapter.id]);
+
   return (
     <>
       {/* Barra inferior — aparece ao rolar para cima */}
@@ -59,6 +98,18 @@ export function ReaderNavBar({
       >
         <div className="mx-auto max-w-2xl px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
           <div className="bg-zinc-900/95 backdrop-blur border border-zinc-700/80 rounded-2xl shadow-2xl shadow-black/50 flex items-stretch overflow-hidden">
+            <button
+              type="button"
+              onClick={goBack}
+              aria-label="Voltar"
+              className="flex flex-col items-center justify-center py-2.5 px-3 text-zinc-400 hover:text-white hover:bg-zinc-800/60 transition-colors border-r border-zinc-800"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="m15 18-6-6 6-6" />
+              </svg>
+              <span className="text-[10px] mt-0.5">Voltar</span>
+            </button>
+
             {prevChapter ? (
               <NavLink href={`/read/${sourceId}/${mangaId}/${prevChapter.id}`} label={`‹ Cap. ${prevChapter.number}`} />
             ) : (
@@ -81,6 +132,18 @@ export function ReaderNavBar({
             ) : (
               <NavDisabled label="Próximo ›" />
             )}
+
+            <button
+              type="button"
+              onClick={goForward}
+              aria-label="Avançar"
+              className="flex flex-col items-center justify-center py-2.5 px-3 text-zinc-400 hover:text-white hover:bg-zinc-800/60 transition-colors border-l border-zinc-800"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="m9 18 6-6-6-6" />
+              </svg>
+              <span className="text-[10px] mt-0.5">Avançar</span>
+            </button>
 
             <button
               type="button"
@@ -123,7 +186,7 @@ export function ReaderNavBar({
                 </svg>
               </button>
             </div>
-            <div className="overflow-y-auto overscroll-contain px-2 py-2">
+            <div ref={chapterListRef} className="overflow-y-auto overscroll-contain px-2 py-2">
               {allChapters.map((ch) => {
                 const isCurrent = ch.id === chapter.id;
                 return (

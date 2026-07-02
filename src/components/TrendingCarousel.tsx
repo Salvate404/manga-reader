@@ -45,14 +45,13 @@ export function TrendingCarousel({ sections, isLoading = false }: TrendingCarous
 
 function SourceCarousel({ section }: { section: TrendingSection }) {
   const trackRef = useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(true);
+  const [canScroll, setCanScroll] = useState(false);
 
   const updateScrollState = useCallback(() => {
     const el = trackRef.current;
     if (!el) return;
-    setCanScrollLeft(el.scrollLeft > 4);
-    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+    // Enable scroll buttons if there's content to scroll (with looping, always enabled when content exists)
+    setCanScroll(el.scrollWidth > el.clientWidth + 4);
   }, []);
 
   useEffect(() => {
@@ -67,7 +66,19 @@ function SourceCarousel({ section }: { section: TrendingSection }) {
   function scrollBy(direction: -1 | 1) {
     const el = trackRef.current;
     if (!el) return;
-    el.scrollBy({ left: direction * 280, behavior: "smooth" });
+
+    const scrollAmount = 280;
+    const maxScroll = el.scrollWidth - el.clientWidth;
+
+    if (direction === 1 && el.scrollLeft >= maxScroll - 10) {
+      // At the end, loop to beginning
+      el.scrollTo({ left: 0, behavior: "smooth" });
+    } else if (direction === -1 && el.scrollLeft <= 10) {
+      // At the beginning, loop to end
+      el.scrollTo({ left: maxScroll, behavior: "smooth" });
+    } else {
+      el.scrollBy({ left: direction * scrollAmount, behavior: "smooth" });
+    }
   }
 
   return (
@@ -75,10 +86,10 @@ function SourceCarousel({ section }: { section: TrendingSection }) {
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-white text-sm font-semibold">{section.sourceName}</h3>
         <div className="flex gap-1">
-          <CarouselButton disabled={!canScrollLeft} onClick={() => scrollBy(-1)} aria-label="Anterior">
+          <CarouselButton disabled={!canScroll} onClick={() => scrollBy(-1)} aria-label="Anterior">
             ‹
           </CarouselButton>
-          <CarouselButton disabled={!canScrollRight} onClick={() => scrollBy(1)} aria-label="Próximo">
+          <CarouselButton disabled={!canScroll} onClick={() => scrollBy(1)} aria-label="Próximo">
             ›
           </CarouselButton>
         </div>

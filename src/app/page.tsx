@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import Link from "next/link";
 import { SearchBar } from "@/components/SearchBar";
 import { MangaCard } from "@/components/MangaCard";
 import { HistorySection } from "@/components/HistorySection";
@@ -55,9 +56,21 @@ export default function HomePage() {
       {/* Hero */}
       {!hasSearched && (
         <div className="mb-7">
-          <h1 className="text-2xl font-bold text-white mb-1">
-            Sua biblioteca de mangás
-          </h1>
+          <div className="flex items-center justify-between mb-1">
+            <h1 className="text-2xl font-bold text-white">
+              Sua biblioteca de mangás
+            </h1>
+            <Link
+              href="/explore"
+              className="flex items-center gap-1.5 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-xl text-sm text-zinc-300 transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" />
+                <path d="m9 12 2 2 4-4" />
+              </svg>
+              Explorar
+            </Link>
+          </div>
           <p className="text-zinc-500 text-sm">
             Busque qualquer mangá e leia direto na fonte, sem anúncios.
           </p>

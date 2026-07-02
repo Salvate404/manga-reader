@@ -35,6 +35,14 @@ export abstract class BaseScraper {
   }
 
   /**
+   * Retorna todos os mangás da fonte (para a página de explorar).
+   * Suporta paginação com page e limit.
+   */
+  async getAllManga(_page = 1, _limit = 50): Promise<MangaSearchResult[]> {
+    return [];
+  }
+
+  /**
    * Retorna os headers HTTP necessários para fazer proxy das imagens desta fonte.
    * Por padrão retorna apenas o Referer. Sobrescreva quando necessário.
    */

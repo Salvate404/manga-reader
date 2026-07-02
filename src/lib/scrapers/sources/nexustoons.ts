@@ -93,6 +93,16 @@ export class NexusToonsScraper extends BaseScraper {
       .map((m) => this.toSearchResult(m));
   }
 
+  async getAllManga(page = 1, limit = 50): Promise<MangaSearchResult[]> {
+    const data = await this.apiGet<{ data?: NexusManga[] }>("/mangas", {
+      page: String(page),
+      limit: String(limit),
+    });
+    return (data?.data ?? [])
+      .filter((m) => !!m.title && !!m.slug)
+      .map((m) => this.toSearchResult(m));
+  }
+
   async getMangaDetail(mangaId: string): Promise<MangaDetail> {
     const manga = await this.apiGet<NexusManga>(`/manga/${mangaId}`);
     if (!manga?.title || !manga.slug) {

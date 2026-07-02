@@ -76,6 +76,27 @@ export class LeituraMangaScraper extends BaseScraper {
     }));
   }
 
+  async getAllManga(page = 1, limit = 50): Promise<MangaSearchResult[]> {
+    const { data } = await axios.get(`${API}/api/search/manga`, {
+      params: { page, limit, includeAdult: "true" },
+      headers: HEADERS,
+      timeout: 12_000,
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const items: any[] = data?.data?.data ?? [];
+    return items.map((item) => ({
+      sourceId:   this.sourceId,
+      sourceName: this.sourceName,
+      mangaId:    item.slug,
+      title:      item.title,
+      cover:      `${CDN}/${item.slug}/cover-sm.webp`,
+      url:        `${BASE}/manga/${item.slug}`,
+      status:     STATUS_MAP[item.status as number] ?? "unknown",
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      genres:     (item.genres ?? []).map((g: any) => (typeof g === "string" ? g : (g.name ?? ""))).filter(Boolean) as string[],
+    }));
+  }
+
   async getMangaDetail(mangaId: string): Promise<MangaDetail> {
     // 1. Buscar _id MongoDB pelo slug via API de pesquisa
     const searchRes = await axios.get(`${API}/api/search/manga`, {
