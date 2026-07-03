@@ -2,11 +2,13 @@ import type { BaseScraper } from "./base";
 import { LeituraMangaScraper } from "./sources/leituramanga";
 import { NexusToonsScraper  } from "./sources/nexustoons";
 import { MangaLixScraper    } from "./sources/mangalix";
+import { MangaDexScraper    } from "./sources/mangadex";
 
 const scrapers: BaseScraper[] = [
   new LeituraMangaScraper(),
   new NexusToonsScraper(),
   new MangaLixScraper(),
+  new MangaDexScraper(),
 ];
 
 /** Retorna todos os scrapers habilitados. */

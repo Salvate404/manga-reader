@@ -20,6 +20,7 @@ const SOURCE_COLOR: Record<string, string> = {
   leituramanga: "text-red-400 bg-red-400/10",
   nexustoons:   "text-violet-400 bg-violet-400/10",
   mangalix:     "text-cyan-400 bg-cyan-400/10",
+  mangadex:     "text-orange-400 bg-orange-400/10",
 };
 
 interface MangaCardProps {

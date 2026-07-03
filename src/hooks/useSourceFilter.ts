@@ -13,6 +13,7 @@ export const ALL_SOURCES: SourceOption[] = [
   { id: "leituramanga", name: "Leitura Manga", language: "PT-BR" },
   { id: "nexustoons",  name: "Nexus Toons",   language: "PT-BR" },
   { id: "mangalix",    name: "MangaLix",       language: "EN"    },
+  { id: "mangadex",    name: "MangaDex",       language: "EN"    },
 ];
 
 const STORAGE_KEY = "manga_reader_sources";
