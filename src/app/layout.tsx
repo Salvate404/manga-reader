@@ -3,12 +3,14 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/Navbar";
 import { NavigationProgress } from "@/components/NavigationProgress";
+import { ReturnPointTracker } from "@/components/ReturnPointTracker";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
   title: "MangáReader",
-  description: "Leia seus mangás favoritos sem anúncios e com uma experiência agradável.",
+  description:
+    "Leia mangás e assista animes sem anúncios, com busca em várias fontes.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
@@ -41,6 +43,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-zinc-950 text-zinc-100">
         <NavigationProgress />
+        <ReturnPointTracker />
         <Navbar />
         <main className="flex-1">{children}</main>
       </body>

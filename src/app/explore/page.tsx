@@ -1,11 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { SearchBar } from "@/components/SearchBar";
 import { ExploreCard } from "@/components/ExploreCard";
 import { useSearch } from "@/hooks/useSearch";
 import { useSourceFilter } from "@/hooks/useSourceFilter";
 import { BROWSE_GENRES } from "@/lib/genres";
+import {
+  loadExploreHubState,
+  saveExploreHubState,
+} from "@/lib/navigation-return";
 import Link from "next/link";
 
 const BLOCK_SIZE = 36; // 12 rows x 3 columns
@@ -40,13 +44,15 @@ function writeExploreCache(key: string, results: any[], total: number): void {
 
 export default function ExplorePage() {
   const { query, setQuery, results, isLoading, error, hasSearched, search } = useSearch();
-  const { selectedSources, toggle, sourcesParam } = useSourceFilter();
+  const { selectedSources, toggle, sourcesParam, hydrated } = useSourceFilter();
   const [exploreResults, setExploreResults] = useState<any[]>([]);
   const [exploreLoading, setExploreLoading] = useState(true);
   const [explorePage, setExplorePage] = useState(1);
   const [exploreTotal, setExploreTotal] = useState(0);
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
   const [isExploreMode, setIsExploreMode] = useState(true);
+  const restoredRef = useRef(false);
+  const skipDefaultLoadRef = useRef(false);
 
   function handleSearch(q: string) {
     setQuery(q);
@@ -90,8 +96,78 @@ export default function ExplorePage() {
   }
 
   useEffect(() => {
+    if (!hydrated || restoredRef.current) return;
+    restoredRef.current = true;
+    const snap = loadExploreHubState();
+    if (!snap) return;
+
+    skipDefaultLoadRef.current = true;
+    setSelectedGenre(snap.selectedGenre);
+    setIsExploreMode(snap.isExploreMode);
+    setExplorePage(snap.explorePage);
+    if (!snap.isExploreMode && snap.hasSearched && snap.query) {
+      setQuery(snap.query);
+      search(snap.query, sourcesParam);
+    } else {
+      loadExplorePage(snap.explorePage || 1);
+    }
+    if (snap.scrollY > 0) {
+      requestAnimationFrame(() => window.scrollTo(0, snap.scrollY));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated]);
+
+  useEffect(() => {
+    if (!hydrated || !restoredRef.current) return;
+    if (skipDefaultLoadRef.current) {
+      skipDefaultLoadRef.current = false;
+      return;
+    }
     loadExplorePage(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sourcesParam]);
+
+  useEffect(() => {
+    if (!hydrated || !restoredRef.current) return;
+    saveExploreHubState({
+      explorePage,
+      isExploreMode,
+      query,
+      selectedGenre,
+      hasSearched,
+      scrollY: typeof window !== "undefined" ? window.scrollY : 0,
+    });
+  }, [
+    explorePage,
+    isExploreMode,
+    query,
+    selectedGenre,
+    hasSearched,
+    hydrated,
+  ]);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    const onScroll = () => {
+      saveExploreHubState({
+        explorePage,
+        isExploreMode,
+        query,
+        selectedGenre,
+        hasSearched,
+        scrollY: window.scrollY || 0,
+      });
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [
+    explorePage,
+    isExploreMode,
+    query,
+    selectedGenre,
+    hasSearched,
+    hydrated,
+  ]);
 
   function handlePageChange(page: number) {
     setExplorePage(page);

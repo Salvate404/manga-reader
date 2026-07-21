@@ -13,6 +13,17 @@ Abra [http://localhost:3000](http://localhost:3000).
 
 > Use `--webpack` no dev: o Turbopack (padrão do Next 16) pode travar o PC em alguns ambientes Windows.
 
+### Mangá e Anime
+
+Na home, use o filtro **Mangá | Anime**.
+
+| Modo | Fontes | O que faz |
+|------|--------|-----------|
+| Mangá | Leitura Manga, Nexus, MangaLix, MangaDex | Busca + leitura de páginas |
+| Anime | **AnimeFire** (PT-BR dublado/legendado) e **AniList** (catálogo) | Sinopse em português + player |
+
+Arquitetura paralela: `src/lib/scrapers/` (mangá) e `src/lib/anime/` (anime).
+
 ## Publicar na internet (site funcionando de verdade)
 
 **GitHub Pages não serve este projeto.** O Pages só mostra arquivos estáticos (por isso aparece o README com texto do create-next-app). O MangáReader precisa de servidor Node para as APIs de busca, capítulos e proxy de imagens.

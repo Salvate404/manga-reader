@@ -2,13 +2,22 @@
 
 import { useState, type FormEvent } from "react";
 import { ALL_SOURCES, type SourceOption } from "@/hooks/useSourceFilter";
+import {
+  ALL_ANIME_SOURCES,
+  type AnimeSourceOption,
+  type AudioFilter,
+} from "@/hooks/useAnimeSourceFilter";
+import type { MediaKind } from "@/lib/types";
 
 interface SearchBarProps {
+  mediaKind?: MediaKind;
   onSearch: (query: string) => void;
   isLoading?: boolean;
   initialValue?: string;
   selectedSources: Set<string>;
   onToggleSource: (id: string) => void;
+  audioFilter?: AudioFilter;
+  onAudioFilterChange?: (filter: AudioFilter) => void;
   browseGenres?: string[];
   availableGenres?: string[];
   selectedGenre: string | null;
@@ -17,11 +26,14 @@ interface SearchBarProps {
 }
 
 export function SearchBar({
+  mediaKind = "manga",
   onSearch,
   isLoading = false,
   initialValue = "",
   selectedSources,
   onToggleSource,
+  audioFilter = "all",
+  onAudioFilterChange,
   browseGenres = [],
   availableGenres = [],
   selectedGenre,
@@ -29,6 +41,8 @@ export function SearchBar({
   onBrowseGenre,
 }: SearchBarProps) {
   const [value, setValue] = useState(initialValue);
+  const sources: Array<SourceOption | AnimeSourceOption> =
+    mediaKind === "anime" ? ALL_ANIME_SOURCES : ALL_SOURCES;
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -37,7 +51,6 @@ export function SearchBar({
 
   return (
     <div className="space-y-3">
-      {/* Campo de busca */}
       <form onSubmit={handleSubmit}>
         <div className="flex gap-2">
           <div className="relative flex-1">
@@ -50,7 +63,7 @@ export function SearchBar({
               type="search"
               value={value}
               onChange={(e) => setValue(e.target.value)}
-              placeholder="Buscar mangá..."
+              placeholder={mediaKind === "anime" ? "Buscar anime..." : "Buscar mangá..."}
               autoComplete="off"
               autoCorrect="off"
               spellCheck={false}
@@ -68,10 +81,9 @@ export function SearchBar({
         </div>
       </form>
 
-      {/* Filtro de fontes */}
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-zinc-500 text-xs font-medium shrink-0">Fontes:</span>
-        {ALL_SOURCES.map((source: SourceOption) => {
+        {sources.map((source) => {
           const active = selectedSources.has(source.id);
           return (
             <button
@@ -93,7 +105,32 @@ export function SearchBar({
         })}
       </div>
 
-      {/* Gêneros — navegação inicial ou filtro dos resultados */}
+      {mediaKind === "anime" && onAudioFilterChange && (
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-zinc-500 text-xs font-medium shrink-0">Áudio:</span>
+          {(
+            [
+              ["all", "Todos"],
+              ["dublado", "Dublado"],
+              ["legendado", "Legendado"],
+            ] as const
+          ).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => onAudioFilterChange(value)}
+              className={`text-xs px-3 py-1.5 rounded-lg border transition-all font-medium ${
+                audioFilter === value
+                  ? "bg-emerald-600/20 border-emerald-500/60 text-emerald-300"
+                  : "bg-zinc-800/30 border-zinc-700/50 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-300"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+
       {(browseGenres.length > 0 || availableGenres.length > 0) && (
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-zinc-500 text-xs font-medium shrink-0">Gênero:</span>
@@ -140,4 +177,3 @@ function Spinner() {
     </svg>
   );
 }
-

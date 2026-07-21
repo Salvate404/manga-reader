@@ -12,6 +12,8 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "2mb",
     },
   },
+  // Pacotes nativos / scrapers pesados no server
+  serverExternalPackages: ["@consumet/extensions", "hls.js"],
 };
 
 export default nextConfig;
