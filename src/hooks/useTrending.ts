@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { fetchMangaFireTrending } from "@/lib/mangafire-api";
 import type { TrendingSection } from "@/lib/trending-service";
 
-const TRENDING_CACHE_KEY = "manga_trending_cache_v2";
+const TRENDING_CACHE_KEY = "manga_trending_cache_v3";
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 function getCachedTrending(): TrendingSection[] | null {
@@ -60,32 +61,38 @@ export function useTrending() {
         return [] as TrendingSection[];
       });
 
-    const edgeSection = (path: string) =>
-      fetch(path)
-        .then((res) => (res.ok ? res.json() : null))
-        .then((data: TrendingSection | null) =>
-          data && Array.isArray(data.items) && data.items.length > 0
-            ? [data]
-            : ([] as TrendingSection[])
-        )
-        .catch(() => [] as TrendingSection[]);
+    const nexusFetch = fetch("/api/trending/nexus")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: TrendingSection | null) =>
+        data && Array.isArray(data.items) && data.items.length > 0
+          ? [data]
+          : ([] as TrendingSection[])
+      )
+      .catch(() => [] as TrendingSection[]);
 
-    Promise.all([
-      mainFetch,
-      edgeSection("/api/trending/nexus"),
-      edgeSection("/api/trending/mangafire"),
-    ]).then(([mainSections, nexusSections, mangafireSections]) => {
-      if (!cancelled) {
-        const allSections = [
-          ...mainSections,
-          ...nexusSections,
-          ...mangafireSections,
-        ];
-        setSections(allSections);
-        setCachedTrending(allSections);
-        setIsLoading(false);
+    // MangaFire: browser → API (Vercel IP bloqueado)
+    const mangafireFetch = fetchMangaFireTrending(12)
+      .then((items) =>
+        items.length
+          ? [{ sourceId: "mangafire", sourceName: "MangaFire", items }]
+          : ([] as TrendingSection[])
+      )
+      .catch(() => [] as TrendingSection[]);
+
+    Promise.all([mainFetch, nexusFetch, mangafireFetch]).then(
+      ([mainSections, nexusSections, mangafireSections]) => {
+        if (!cancelled) {
+          const allSections = [
+            ...mainSections,
+            ...nexusSections,
+            ...mangafireSections,
+          ];
+          setSections(allSections);
+          setCachedTrending(allSections);
+          setIsLoading(false);
+        }
       }
-    });
+    );
 
     return () => {
       cancelled = true;

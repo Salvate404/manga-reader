@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useCallback, useRef } from "react";
+import { fetchMangaFireSearch } from "@/lib/mangafire-api";
 import type { SearchApiResponse, MangaSearchResult } from "@/lib/types";
 
 function cacheKey(q: string, sources: string) {
-  return `search_v2__${q.toLowerCase().trim()}__${sources}`;
+  return `search_v3__${q.toLowerCase().trim()}__${sources}`;
 }
 
 function readCache(key: string): MangaSearchResult[] | null {
@@ -57,7 +58,8 @@ export function useSearch() {
     setHasSearched(true);
 
     try {
-      // Nexus / MangaFire: Edge direto do browser (Node serverless toma 403 na Vercel)
+      // Nexus: Edge na Vercel. MangaFire: fetch no browser (CORS *) —
+      // IP da Vercel (Node e Edge) toma 403 no mangafire.to.
       const sourceList = sourcesParam ? sourcesParam.split(",") : null;
       const includeNexus = !sourceList || sourceList.includes("nexustoons");
       const includeMangaFire = !sourceList || sourceList.includes("mangafire");
@@ -65,14 +67,6 @@ export function useSearch() {
       const url = new URL("/api/search", location.origin);
       url.searchParams.set("q", trimmed);
       if (sourcesParam) url.searchParams.set("sources", sourcesParam);
-
-      const edgeSearch = (path: string) =>
-        fetch(`${path}?q=${encodeURIComponent(trimmed)}`, {
-          signal: controller.signal,
-        })
-          .then((res) => (res.ok ? res.json() : { results: [] }))
-          .then((json: { results?: MangaSearchResult[] }) => json.results ?? [])
-          .catch(() => [] as MangaSearchResult[]);
 
       const tasks: Promise<MangaSearchResult[]>[] = [
         fetch(url.toString(), { signal: controller.signal })
@@ -83,8 +77,22 @@ export function useSearch() {
           .then((json) => json.results),
       ];
 
-      if (includeNexus) tasks.push(edgeSearch("/api/search/nexus"));
-      if (includeMangaFire) tasks.push(edgeSearch("/api/search/mangafire"));
+      if (includeNexus) {
+        tasks.push(
+          fetch(`/api/search/nexus?q=${encodeURIComponent(trimmed)}`, {
+            signal: controller.signal,
+          })
+            .then((res) => (res.ok ? res.json() : { results: [] }))
+            .then((json: { results?: MangaSearchResult[] }) => json.results ?? [])
+            .catch(() => [] as MangaSearchResult[])
+        );
+      }
+
+      if (includeMangaFire) {
+        tasks.push(
+          fetchMangaFireSearch(trimmed).catch(() => [] as MangaSearchResult[])
+        );
+      }
 
       const settled = await Promise.allSettled(tasks);
       const combined: MangaSearchResult[] = [];

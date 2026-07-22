@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Reader } from "@/components/Reader";
+import { fetchMangaFireChaptersResponse } from "@/lib/mangafire-api";
 import type { ChaptersApiResponse, MangaDetail } from "@/lib/types";
 
 interface Props {
@@ -25,15 +26,24 @@ export function EdgeReadPage({
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
-    fetch(detailApiPath)
-      .then((res) => (res.ok ? (res.json() as Promise<ChaptersApiResponse>) : null))
+    setIsLoading(true);
+    setFailed(false);
+
+    const load =
+      sourceId === "mangafire"
+        ? fetchMangaFireChaptersResponse(mangaSlug)
+        : fetch(detailApiPath).then((res) =>
+            res.ok ? (res.json() as Promise<ChaptersApiResponse>) : null
+          );
+
+    load
       .then((data) => {
         if (!data?.manga) setFailed(true);
         else setManga(data.manga);
       })
       .catch(() => setFailed(true))
       .finally(() => setIsLoading(false));
-  }, [detailApiPath]);
+  }, [detailApiPath, sourceId, mangaSlug]);
 
   if (isLoading) {
     return (

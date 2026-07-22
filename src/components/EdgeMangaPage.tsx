@@ -10,6 +10,7 @@ import Link from "next/link";
 import { ChapterList } from "@/components/ChapterList";
 import { ProxyImage } from "@/components/ProxyImage";
 import { MangaReadButtons } from "@/components/MangaReadButtons";
+import { fetchMangaFireChaptersResponse } from "@/lib/mangafire-api";
 import { resolveImageUrl } from "@/lib/image-url";
 import type { ChaptersApiResponse, MangaDetail } from "@/lib/types";
 
@@ -34,15 +35,23 @@ export function EdgeMangaPage({ sourceId, mangaSlug, detailApiPath }: Props) {
   useEffect(() => {
     setIsLoading(true);
     setFailed(false);
-    fetch(detailApiPath)
-      .then((res) => (res.ok ? (res.json() as Promise<ChaptersApiResponse>) : null))
+
+    const load =
+      sourceId === "mangafire"
+        ? // Browser → mangafire.to (CORS). Rotas Vercel tomam 403.
+          fetchMangaFireChaptersResponse(mangaSlug)
+        : fetch(detailApiPath).then((res) =>
+            res.ok ? (res.json() as Promise<ChaptersApiResponse>) : null
+          );
+
+    load
       .then((data) => {
         if (!data?.manga) setFailed(true);
         else setManga(data.manga);
       })
       .catch(() => setFailed(true))
       .finally(() => setIsLoading(false));
-  }, [detailApiPath]);
+  }, [detailApiPath, sourceId, mangaSlug]);
 
   if (isLoading) {
     return (

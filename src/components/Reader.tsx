@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { ProxyImage } from "@/components/ProxyImage";
 import { ReaderNavBar } from "@/components/ReaderNavBar";
+import { fetchMangaFirePages } from "@/lib/mangafire-api";
 import type { ChapterPage, Chapter } from "@/lib/types";
 import { addToHistory, updateHistoryPage, getChapterSavedPage } from "@/lib/history";
 
@@ -51,25 +52,24 @@ export function Reader({ sourceId, sourceName, mangaId, mangaTitle, cover, chapt
     setError(null);
     setPages([]);
 
-    // Nexus / MangaFire: Edge direto do browser (Node serverless toma 403 na Vercel)
-    const endpoint =
-      sourceId === "nexustoons"
-        ? `/api/nexus/chapter/${encodeURIComponent(chapter.id)}`
-        : sourceId === "mangafire"
-          ? `/api/mangafire/chapter/${encodeURIComponent(chapter.id)}`
-          : `/api/pages?sourceId=${sourceId}&chapterId=${encodeURIComponent(chapter.id)}`;
+    // Nexus: Edge na Vercel. MangaFire: browser → API (IP Vercel toma 403).
+    const loadPages =
+      sourceId === "mangafire"
+        ? fetchMangaFirePages(chapter.id).then((pages) => ({ pages }))
+        : fetch(
+            sourceId === "nexustoons"
+              ? `/api/nexus/chapter/${encodeURIComponent(chapter.id)}`
+              : `/api/pages?sourceId=${sourceId}&chapterId=${encodeURIComponent(chapter.id)}`
+          ).then((res) => {
+            if (!res.ok) throw new Error("Erro ao carregar páginas");
+            return res.json() as Promise<{ pages?: ChapterPage[] }>;
+          });
 
-    fetch(endpoint)
-      .then((res) => {
-        if (!res.ok) throw new Error("Erro ao carregar páginas");
-        return res.json();
-      })
+    loadPages
       .then((data) => {
         const loadedPages = data.pages ?? [];
-        // Lê a página salva ANTES de chamar addToHistory (que atualiza readAt)
         savedPageRef.current = getChapterSavedPage(sourceId, mangaId, chapter.id);
         setPages(loadedPages);
-        // Salva no histórico assim que o capítulo carrega
         if (loadedPages.length > 0) {
           addToHistory({
             sourceId,
