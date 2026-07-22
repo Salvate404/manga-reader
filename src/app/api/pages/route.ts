@@ -32,6 +32,8 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  // mangafire: páginas via /api/mangafire/chapter (Edge) no Reader
+
   const scraper = getScraperById(sourceId);
   if (!scraper) {
     return NextResponse.json(

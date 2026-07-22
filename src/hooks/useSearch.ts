@@ -4,7 +4,7 @@ import { useState, useCallback, useRef } from "react";
 import type { SearchApiResponse, MangaSearchResult } from "@/lib/types";
 
 function cacheKey(q: string, sources: string) {
-  return `search__${q.toLowerCase().trim()}__${sources}`;
+  return `search_v2__${q.toLowerCase().trim()}__${sources}`;
 }
 
 function readCache(key: string): MangaSearchResult[] | null {
@@ -57,13 +57,22 @@ export function useSearch() {
     setHasSearched(true);
 
     try {
-      // Nexus Toons usa rota Edge diretamente do browser (serverless→edge falha na Vercel)
+      // Nexus / MangaFire: Edge direto do browser (Node serverless toma 403 na Vercel)
       const sourceList = sourcesParam ? sourcesParam.split(",") : null;
       const includeNexus = !sourceList || sourceList.includes("nexustoons");
+      const includeMangaFire = !sourceList || sourceList.includes("mangafire");
 
       const url = new URL("/api/search", location.origin);
       url.searchParams.set("q", trimmed);
       if (sourcesParam) url.searchParams.set("sources", sourcesParam);
+
+      const edgeSearch = (path: string) =>
+        fetch(`${path}?q=${encodeURIComponent(trimmed)}`, {
+          signal: controller.signal,
+        })
+          .then((res) => (res.ok ? res.json() : { results: [] }))
+          .then((json: { results?: MangaSearchResult[] }) => json.results ?? [])
+          .catch(() => [] as MangaSearchResult[]);
 
       const tasks: Promise<MangaSearchResult[]>[] = [
         fetch(url.toString(), { signal: controller.signal })
@@ -74,16 +83,8 @@ export function useSearch() {
           .then((json) => json.results),
       ];
 
-      if (includeNexus) {
-        tasks.push(
-          fetch(`/api/search/nexus?q=${encodeURIComponent(trimmed)}`, {
-            signal: controller.signal,
-          })
-            .then((res) => (res.ok ? res.json() : { results: [] }))
-            .then((json: { results?: MangaSearchResult[] }) => json.results ?? [])
-            .catch(() => [] as MangaSearchResult[])
-        );
-      }
+      if (includeNexus) tasks.push(edgeSearch("/api/search/nexus"));
+      if (includeMangaFire) tasks.push(edgeSearch("/api/search/mangafire"));
 
       const settled = await Promise.allSettled(tasks);
       const combined: MangaSearchResult[] = [];

@@ -28,10 +28,18 @@ export function resolveImageUrl(
     return imageUrl;
   }
 
-  // Nexus CDN bloqueia IP da Vercel — browser carrega direto
+  // Nexus / MangaFire CDN bloqueiam IP da Vercel — browser carrega direto
   if (
     sourceId === "nexustoons" &&
     (imageUrl.includes("nx-toons.xyz") || imageUrl.includes("nexustoons.com"))
+  ) {
+    return imageUrl;
+  }
+  if (
+    sourceId === "mangafire" ||
+    imageUrl.includes("mfcdn.nl") ||
+    imageUrl.includes("mfcdn2.xyz") ||
+    imageUrl.includes("mfcdn.cc")
   ) {
     return imageUrl;
   }

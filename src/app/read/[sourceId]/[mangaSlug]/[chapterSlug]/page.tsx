@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Reader } from "@/components/Reader";
-import { NexusReadPage } from "@/components/NexusReadPage";
+import { EdgeReadPage } from "@/components/EdgeReadPage";
 import { getMangaChapters } from "@/lib/manga-service";
 import { getScraperById } from "@/lib/scrapers/registry";
 
@@ -16,9 +16,27 @@ export default async function ReadPage({ params }: ReadPageProps) {
   const mangaSlug = decodeURIComponent(rawManga);
   const chapterSlug = decodeURIComponent(rawChapter);
 
-  // NexusToons: usa client component que chama rotas Edge diretamente
   if (sourceId === "nexustoons") {
-    return <NexusReadPage sourceId={sourceId} mangaSlug={mangaSlug} chapterSlug={chapterSlug} />;
+    return (
+      <EdgeReadPage
+        sourceId={sourceId}
+        sourceName="Nexus Toons"
+        mangaSlug={mangaSlug}
+        chapterSlug={chapterSlug}
+        detailApiPath={`/api/nexus/manga/${encodeURIComponent(mangaSlug)}`}
+      />
+    );
+  }
+  if (sourceId === "mangafire") {
+    return (
+      <EdgeReadPage
+        sourceId={sourceId}
+        sourceName="MangaFire"
+        mangaSlug={mangaSlug}
+        chapterSlug={chapterSlug}
+        detailApiPath={`/api/mangafire/manga/${encodeURIComponent(mangaSlug)}`}
+      />
+    );
   }
 
   const data = await getMangaChapters(sourceId, mangaSlug);

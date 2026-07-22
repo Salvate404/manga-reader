@@ -7,13 +7,13 @@ export interface TrendingSection {
   items: MangaSearchResult[];
 }
 
+const EDGE_ONLY = new Set(["nexustoons", "mangafire"]);
+
 /**
- * Busca trending somente das fontes serverless (leituramanga, mangalix, etc.).
- * NexusToons é carregado no browser via /api/trending/nexus (rota Edge)
- * pelo hook useTrending, para evitar o salço serverless→edge que falha na Vercel.
+ * Trending serverless. Nexus / MangaFire vêm do browser via rotas Edge.
  */
 export async function getTrendingBySource(limit = 10): Promise<TrendingSection[]> {
-  const scrapers = getAllScrapers().filter((s) => s.sourceId !== "nexustoons");
+  const scrapers = getAllScrapers().filter((s) => !EDGE_ONLY.has(s.sourceId));
 
   const settled = await Promise.allSettled(
     scrapers.map(async (scraper) => ({

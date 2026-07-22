@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChapterList } from "@/components/ChapterList";
 import { ProxyImage } from "@/components/ProxyImage";
-import { NexusMangaPage } from "@/components/NexusMangaPage";
+import { EdgeMangaPage } from "@/components/EdgeMangaPage";
 import { MangaReadButtons } from "@/components/MangaReadButtons";
 import { getMangaChapters } from "@/lib/manga-service";
 import { getScraperById } from "@/lib/scrapers/registry";
@@ -18,9 +18,24 @@ export default async function MangaPage({ params }: MangaPageProps) {
   const { sourceId, mangaSlug: rawSlug } = await params;
   const mangaSlug = decodeURIComponent(rawSlug);
 
-  // NexusToons: usa client component que chama a rota Edge diretamente
+  // Fontes bloqueadas no Node da Vercel → Edge via browser
   if (sourceId === "nexustoons") {
-    return <NexusMangaPage sourceId={sourceId} mangaSlug={mangaSlug} />;
+    return (
+      <EdgeMangaPage
+        sourceId={sourceId}
+        mangaSlug={mangaSlug}
+        detailApiPath={`/api/nexus/manga/${encodeURIComponent(mangaSlug)}`}
+      />
+    );
+  }
+  if (sourceId === "mangafire") {
+    return (
+      <EdgeMangaPage
+        sourceId={sourceId}
+        mangaSlug={mangaSlug}
+        detailApiPath={`/api/mangafire/manga/${encodeURIComponent(mangaSlug)}`}
+      />
+    );
   }
 
   const data = await getMangaChapters(sourceId, mangaSlug);

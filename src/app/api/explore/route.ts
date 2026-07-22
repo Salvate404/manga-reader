@@ -19,10 +19,13 @@ export async function GET(request: NextRequest) {
   const sourcesParam = searchParams.get("sources")?.trim();
   const allowedSources = sourcesParam ? new Set(sourcesParam.split(",")) : null;
 
+  // Nexus / MangaFire: 403 no Node da Vercel — fora do explore serverless
+  const EDGE_ONLY = new Set(["nexustoons", "mangafire"]);
   const allScrapers = getAllScrapers();
-  const scrapers = allowedSources
+  const scrapers = (allowedSources
     ? allScrapers.filter((s) => allowedSources.has(s.sourceId))
-    : allScrapers;
+    : allScrapers
+  ).filter((s) => !EDGE_ONLY.has(s.sourceId));
 
   const allResults: MangaSearchResult[] = [];
 

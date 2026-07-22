@@ -4,10 +4,12 @@ import type { SearchApiResponse, MangaSearchResult } from "@/lib/types";
 
 export const maxDuration = 30;
 
+/** Fontes que rodam só em Edge (bloqueiam IP Node da Vercel). */
+const EDGE_ONLY = new Set(["nexustoons", "mangafire"]);
+
 /**
  * Busca somente nas fontes serverless (leituramanga, mangalix, etc.).
- * NexusToons é buscado no browser via /api/search/nexus (rota Edge)
- * pelo hook useSearch, para evitar o salço serverless→edge que falha na Vercel.
+ * NexusToons / MangaFire: browser → /api/search/{fonte} (Edge).
  */
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -22,8 +24,10 @@ export async function GET(request: NextRequest) {
 
   const allScrapers = getAllScrapers();
   const scrapers = allowedSources
-    ? allScrapers.filter((s) => allowedSources.has(s.sourceId) && s.sourceId !== "nexustoons")
-    : allScrapers.filter((s) => s.sourceId !== "nexustoons");
+    ? allScrapers.filter(
+        (s) => allowedSources.has(s.sourceId) && !EDGE_ONLY.has(s.sourceId)
+      )
+    : allScrapers.filter((s) => !EDGE_ONLY.has(s.sourceId));
 
   const results: MangaSearchResult[] = [];
   const sourceErrors: SearchApiResponse["sourceErrors"] = [];

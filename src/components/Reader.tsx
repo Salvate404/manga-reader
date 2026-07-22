@@ -51,11 +51,13 @@ export function Reader({ sourceId, sourceName, mangaId, mangaTitle, cover, chapt
     setError(null);
     setPages([]);
 
-    // NexusToons: chama a rota Edge diretamente do browser (evita bloqueio de IP na serverless)
+    // Nexus / MangaFire: Edge direto do browser (Node serverless toma 403 na Vercel)
     const endpoint =
       sourceId === "nexustoons"
         ? `/api/nexus/chapter/${encodeURIComponent(chapter.id)}`
-        : `/api/pages?sourceId=${sourceId}&chapterId=${encodeURIComponent(chapter.id)}`;
+        : sourceId === "mangafire"
+          ? `/api/mangafire/chapter/${encodeURIComponent(chapter.id)}`
+          : `/api/pages?sourceId=${sourceId}&chapterId=${encodeURIComponent(chapter.id)}`;
 
     fetch(endpoint)
       .then((res) => {

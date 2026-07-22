@@ -12,6 +12,7 @@ export async function getMangaChapters(
       `/api/nexus/manga/${encodeURIComponent(mangaId)}`
     );
   }
+  // mangafire: detalhe só via Edge no browser (EdgeMangaPage) — evita 403 serverless
 
   const scraper = getScraperById(sourceId);
   if (!scraper) return null;
