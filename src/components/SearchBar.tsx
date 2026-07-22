@@ -7,6 +7,10 @@ import {
   type AnimeSourceOption,
   type AudioFilter,
 } from "@/hooks/useAnimeSourceFilter";
+import {
+  ALL_SHORTS_SOURCES,
+  type ShortsSourceOption,
+} from "@/hooks/useShortsSourceFilter";
 import type { MediaKind } from "@/lib/types";
 
 interface SearchBarProps {
@@ -41,8 +45,12 @@ export function SearchBar({
   onBrowseGenre,
 }: SearchBarProps) {
   const [value, setValue] = useState(initialValue);
-  const sources: Array<SourceOption | AnimeSourceOption> =
-    mediaKind === "anime" ? ALL_ANIME_SOURCES : ALL_SOURCES;
+  const sources: Array<SourceOption | AnimeSourceOption | ShortsSourceOption> =
+    mediaKind === "anime"
+      ? ALL_ANIME_SOURCES
+      : mediaKind === "shorts"
+        ? ALL_SHORTS_SOURCES
+        : ALL_SOURCES;
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -63,7 +71,13 @@ export function SearchBar({
               type="search"
               value={value}
               onChange={(e) => setValue(e.target.value)}
-              placeholder={mediaKind === "anime" ? "Buscar anime..." : "Buscar mangá..."}
+              placeholder={
+                mediaKind === "anime"
+                  ? "Buscar anime..."
+                  : mediaKind === "shorts"
+                    ? "Buscar short drama..."
+                    : "Buscar mangá..."
+              }
               autoComplete="off"
               autoCorrect="off"
               spellCheck={false}
@@ -85,19 +99,27 @@ export function SearchBar({
         <span className="text-zinc-500 text-xs font-medium shrink-0">Fontes:</span>
         {sources.map((source) => {
           const active = selectedSources.has(source.id);
+          const activeClass =
+            mediaKind === "shorts"
+              ? "bg-fuchsia-600/20 border-fuchsia-500/60 text-fuchsia-300"
+              : "bg-red-600/20 border-red-500/60 text-red-300";
+          const dotClass =
+            mediaKind === "shorts"
+              ? "bg-fuchsia-400"
+              : "bg-red-400";
           return (
             <button
               key={source.id}
               onClick={() => onToggleSource(source.id)}
               className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border transition-all ${
                 active
-                  ? "bg-red-600/20 border-red-500/60 text-red-300"
+                  ? activeClass
                   : "bg-zinc-800/50 border-zinc-700/50 text-zinc-500 hover:border-zinc-600 hover:text-zinc-400"
               }`}
             >
-              <span className={`w-1.5 h-1.5 rounded-full ${active ? "bg-red-400" : "bg-zinc-600"}`} />
+              <span className={`w-1.5 h-1.5 rounded-full ${active ? dotClass : "bg-zinc-600"}`} />
               {source.name}
-              <span className={`text-[10px] ${active ? "text-red-400/70" : "text-zinc-600"}`}>
+              <span className={`text-[10px] ${active ? "opacity-70" : "text-zinc-600"}`}>
                 {source.language}
               </span>
             </button>

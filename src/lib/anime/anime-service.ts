@@ -17,6 +17,9 @@ export interface AnimeTrendingSection {
 /** Fontes que hospedam o vídeo de verdade (não só catálogo). */
 const STREAM_HOSTS = new Set(["animefire", "goyabu", "animesonline"]);
 
+/** Hosts PT-BR usados no fallback cruzado. */
+const CROSS_SOURCE_HOSTS = new Set(["animefire", "goyabu", "animesonline"]);
+
 export async function searchAnime(
   query: string,
   sourceIds?: string[]
@@ -74,7 +77,9 @@ async function resolveStrictCrossSourceStreams(
   episodeNumber: number,
   audioType?: AnimeAudioType | "all" | "unknown"
 ): Promise<AnimeEpisodeStreams | null> {
-  const hosts = getAllAnimeSources().filter((s) => STREAM_HOSTS.has(s.sourceId));
+  const hosts = getAllAnimeSources().filter((s) =>
+    CROSS_SOURCE_HOSTS.has(s.sourceId)
+  );
   const MIN_SCORE = 90;
 
   for (const source of hosts) {
@@ -158,7 +163,7 @@ export async function findSameAnimeElsewhere(
   audioType?: AnimeAudioType | "unknown"
 ): Promise<AnimeSearchResult[]> {
   const hosts = getAllAnimeSources().filter(
-    (s) => STREAM_HOSTS.has(s.sourceId) && s.sourceId !== currentSourceId
+    (s) => CROSS_SOURCE_HOSTS.has(s.sourceId) && s.sourceId !== currentSourceId
   );
   const out: AnimeSearchResult[] = [];
 

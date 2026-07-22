@@ -95,7 +95,7 @@ export interface PagesApiResponse {
 
 // ─── Tipo de mídia (filtro Mangá / Anime) ─────────────────────────────────────
 
-export type MediaKind = "manga" | "anime";
+export type MediaKind = "manga" | "anime" | "shorts";
 export type AnimeAudioType = "dublado" | "legendado" | "unknown";
 
 // ─── Anime ────────────────────────────────────────────────────────────────────
@@ -202,5 +202,43 @@ export interface AnimeDetailApiResponse {
 }
 
 export interface AnimeStreamsApiResponse {
+  streams: AnimeEpisodeStreams;
+}
+
+// ─── Short Drama ──────────────────────────────────────────────────────────────
+
+export interface ShortSearchResult {
+  sourceId: "shortdrama" | "flextv" | "dramashorts";
+  sourceName: string;
+  seriesId: string;
+  title: string;
+  cover: string | null;
+  url: string;
+  episodeCount?: number;
+  format?: string;
+}
+
+export interface ShortDetail {
+  sourceId: "shortdrama" | "flextv" | "dramashorts";
+  seriesId: string;
+  title: string;
+  cover: string | null;
+  description?: string;
+  episodeCount?: number;
+  episodes: AnimeEpisode[];
+  format?: string;
+}
+
+export interface ShortSearchApiResponse {
+  results: ShortSearchResult[];
+  sourceErrors?: { sourceId: string; error: string }[];
+  error?: string;
+}
+
+export interface ShortDetailApiResponse {
+  series: ShortDetail;
+}
+
+export interface ShortStreamsApiResponse {
   streams: AnimeEpisodeStreams;
 }

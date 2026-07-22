@@ -12,7 +12,9 @@ export function useMediaKind() {
   useEffect(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored === "manga" || stored === "anime") setKindState(stored);
+      if (stored === "manga" || stored === "anime" || stored === "shorts") {
+        setKindState(stored);
+      }
     } catch {}
     setHydrated(true);
   }, []);

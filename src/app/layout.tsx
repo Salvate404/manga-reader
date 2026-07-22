@@ -10,7 +10,7 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 export const metadata: Metadata = {
   title: "MangáReader",
   description:
-    "Leia mangás e assista animes sem anúncios, com busca em várias fontes.",
+    "Leia mangás, assista animes e short dramas sem anúncios, com busca em várias fontes.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,

@@ -9,9 +9,16 @@ interface EpisodeListProps {
   sourceId: string;
   animeId: string;
   episodes: AnimeEpisode[];
+  /** Prefixo do link; default `/watch/{sourceId}` */
+  watchBase?: string;
 }
 
-export function EpisodeList({ sourceId, animeId, episodes }: EpisodeListProps) {
+export function EpisodeList({
+  sourceId,
+  animeId,
+  episodes,
+  watchBase,
+}: EpisodeListProps) {
   const [order, setOrder] = useState<"desc" | "asc">("asc");
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
@@ -46,7 +53,9 @@ export function EpisodeList({ sourceId, animeId, episodes }: EpisodeListProps) {
 
       <div className="space-y-2">
         {sorted.map((ep) => {
-          const href = `/watch/${sourceId}/${encodeURIComponent(animeId)}/${encodeURIComponent(ep.id)}`;
+          const base =
+            watchBase ?? `/watch/${sourceId}`;
+          const href = `${base}/${encodeURIComponent(animeId)}/${encodeURIComponent(ep.id)}`;
           const expanded = expandedId === ep.id;
 
           return (

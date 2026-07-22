@@ -12,12 +12,19 @@ export function resolveImageUrl(
     sourceId === "goyabu" ||
     sourceId === "animesonline" ||
     sourceId === "animeunity" ||
+    sourceId === "shortdrama" ||
+    sourceId === "flextv" ||
+    sourceId === "dramashorts" ||
     imageUrl.includes("anilist.co") ||
     imageUrl.includes("anizip") ||
     imageUrl.includes("myanimelist.net") ||
     imageUrl.includes("animefire.") ||
     imageUrl.includes("goyabu.") ||
     imageUrl.includes("animesonline.") ||
+    imageUrl.includes("shortdrama.st") ||
+    imageUrl.includes("flextv.cc") ||
+    imageUrl.includes("dramashorts.io") ||
+    imageUrl.includes("dramaboxdb.com") ||
     imageUrl.includes("mangas.cloud")
   ) {
     return imageUrl;

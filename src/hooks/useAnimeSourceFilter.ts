@@ -15,7 +15,7 @@ export const ALL_ANIME_SOURCES: AnimeSourceOption[] = [
   { id: "animesonline", name: "AnimesOnline", language: "PT-BR" },
 ];
 
-const STORAGE_KEY = "anime_reader_sources_v4";
+const STORAGE_KEY = "anime_reader_sources_v6";
 const AUDIO_KEY = "anime_audio_filter";
 
 export type AudioFilter = "all" | AnimeAudioType;

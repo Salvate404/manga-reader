@@ -1,17 +1,19 @@
 import Link from "next/link";
 import { getSourceList } from "@/lib/scrapers/registry";
 import { getAnimeSourceList } from "@/lib/anime/registry";
+import { getShortsSourceList } from "@/lib/shorts/service";
 
 export default function SourcesPage() {
   const mangaSources = getSourceList();
   const animeSources = getAnimeSourceList();
+  const shortsSources = getShortsSourceList();
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-6 page-enter">
       <div className="mb-6">
         <h1 className="text-xl font-bold text-white mb-1">Fontes configuradas</h1>
         <p className="text-zinc-400 text-sm">
-          Mangá e anime rodam em pipelines paralelos — cada um com suas próprias fontes.
+          Mangá, anime e short drama rodam em pipelines separados — cada um com suas fontes.
         </p>
       </div>
 
@@ -50,6 +52,17 @@ export default function SourcesPage() {
             </li>
           </ul>
         </div>
+      </section>
+
+      <section className="mb-8">
+        <h2 className="text-zinc-300 text-sm font-semibold uppercase tracking-wider mb-3">
+          Short Drama
+        </h2>
+        {shortsSources.length === 0 ? (
+          <EmptySources kind="short drama" />
+        ) : (
+          <SourceList sources={shortsSources} />
+        )}
       </section>
 
       <div className="mt-6 p-4 bg-zinc-800/30 border border-zinc-700/30 rounded-xl">

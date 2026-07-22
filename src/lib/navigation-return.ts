@@ -15,7 +15,7 @@ export interface ReturnPoint {
 
 export interface HomeHubState {
   at: number;
-  kind: "manga" | "anime";
+  kind: "manga" | "anime" | "shorts";
   query: string;
   selectedGenre: string | null;
   hasSearched: boolean;
@@ -42,8 +42,20 @@ export function isHubPath(pathname: string): boolean {
 
 /** Camadas a pular no histórico: capa=1, episódio/capítulo=2 */
 export function contentLayer(pathname: string): number {
-  if (pathname.startsWith("/watch/") || pathname.startsWith("/read/")) return 2;
-  if (pathname.startsWith("/anime/") || pathname.startsWith("/manga/")) return 1;
+  if (
+    pathname.startsWith("/watch/") ||
+    pathname.startsWith("/read/") ||
+    pathname.startsWith("/shorts/watch/")
+  ) {
+    return 2;
+  }
+  if (
+    pathname.startsWith("/anime/") ||
+    pathname.startsWith("/manga/") ||
+    pathname.startsWith("/shorts/")
+  ) {
+    return 1;
+  }
   return 0;
 }
 

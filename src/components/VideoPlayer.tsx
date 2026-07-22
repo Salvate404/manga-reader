@@ -15,6 +15,8 @@ interface VideoPlayerProps {
   activeExternalAudio?: AudioOpt | null;
   onExternalAudioChange?: (audio: AudioOpt) => void;
   switchingAudio?: boolean;
+  /** Short drama vertical (9:16); padrão landscape 16:9 */
+  layout?: "landscape" | "portrait";
 }
 
 function pickPreferred(sources: AnimeStreamSource[]): AnimeStreamSource | undefined {
@@ -37,6 +39,7 @@ export function VideoPlayer({
   activeExternalAudio = null,
   onExternalAudioChange,
   switchingAudio = false,
+  layout = "landscape",
 }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const resumeRef = useRef<{ time: number; play: boolean } | null>(null);
@@ -229,7 +232,13 @@ export function VideoPlayer({
 
   if (!current) {
     return (
-      <div className="aspect-video bg-zinc-900 border border-zinc-800 rounded-xl flex items-center justify-center text-zinc-500 text-sm">
+      <div
+        className={`${
+          layout === "portrait"
+            ? "mx-auto w-full max-w-[420px] aspect-[9/16]"
+            : "aspect-video"
+        } bg-zinc-900 border border-zinc-800 rounded-xl flex items-center justify-center text-zinc-500 text-sm`}
+      >
         Nenhum stream disponível
       </div>
     );
@@ -239,9 +248,14 @@ export function VideoPlayer({
     (s, i, arr) => arr.findIndex((x) => x.url === s.url) === i
   );
 
+  const frameClass =
+    layout === "portrait"
+      ? "relative mx-auto w-full max-w-[420px] aspect-[9/16] max-h-[min(80vh,720px)] bg-black rounded-xl overflow-hidden border border-zinc-800"
+      : "relative aspect-video bg-black rounded-xl overflow-hidden border border-zinc-800";
+
   return (
     <div className="space-y-2">
-      <div className="relative aspect-video bg-black rounded-xl overflow-hidden border border-zinc-800">
+      <div className={frameClass}>
         {current.isEmbed ? (
           <iframe
             key={current.url}
@@ -254,7 +268,7 @@ export function VideoPlayer({
         ) : (
           <video
             ref={videoRef}
-            className="w-full h-full"
+            className="absolute inset-0 w-full h-full object-contain bg-black"
             controls
             playsInline
             autoPlay
