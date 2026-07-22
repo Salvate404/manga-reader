@@ -12,7 +12,9 @@ interface ReadPageProps {
 export const maxDuration = 30;
 
 export default async function ReadPage({ params }: ReadPageProps) {
-  const { sourceId, mangaSlug, chapterSlug } = await params;
+  const { sourceId, mangaSlug: rawManga, chapterSlug: rawChapter } = await params;
+  const mangaSlug = decodeURIComponent(rawManga);
+  const chapterSlug = decodeURIComponent(rawChapter);
 
   // NexusToons: usa client component que chama rotas Edge diretamente
   if (sourceId === "nexustoons") {
@@ -24,7 +26,9 @@ export default async function ReadPage({ params }: ReadPageProps) {
   if (!data) notFound();
 
   const { manga } = data;
-  const chapterIndex = manga.chapters.findIndex((c) => c.id === chapterSlug);
+  const chapterIndex = manga.chapters.findIndex(
+    (c) => c.id === chapterSlug || c.id === rawChapter
+  );
   const chapter = manga.chapters[chapterIndex];
 
   if (!chapter) notFound();

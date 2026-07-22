@@ -22,7 +22,7 @@ export function ChapterList({ sourceId, mangaId, chapters, lastReadChapterId }: 
   return (
     <div className="space-y-0.5">
       {chapters.map((chapter, idx) => {
-        const href = `/read/${sourceId}/${mangaId}/${chapter.id}`;
+        const href = `/read/${sourceId}/${encodeURIComponent(mangaId)}/${encodeURIComponent(chapter.id)}`;
         const isLastRead = chapter.id === lastReadChapterId;
         const isEven = idx % 2 === 0;
 

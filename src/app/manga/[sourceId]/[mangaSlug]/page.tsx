@@ -5,6 +5,7 @@ import { ProxyImage } from "@/components/ProxyImage";
 import { NexusMangaPage } from "@/components/NexusMangaPage";
 import { MangaReadButtons } from "@/components/MangaReadButtons";
 import { getMangaChapters } from "@/lib/manga-service";
+import { getScraperById } from "@/lib/scrapers/registry";
 import { resolveImageUrl } from "@/lib/image-url";
 
 interface MangaPageProps {
@@ -14,7 +15,8 @@ interface MangaPageProps {
 export const maxDuration = 30;
 
 export default async function MangaPage({ params }: MangaPageProps) {
-  const { sourceId, mangaSlug } = await params;
+  const { sourceId, mangaSlug: rawSlug } = await params;
+  const mangaSlug = decodeURIComponent(rawSlug);
 
   // NexusToons: usa client component que chama a rota Edge diretamente
   if (sourceId === "nexustoons") {
@@ -23,7 +25,21 @@ export default async function MangaPage({ params }: MangaPageProps) {
 
   const data = await getMangaChapters(sourceId, mangaSlug);
 
-  if (!data) notFound();
+  if (!data) {
+    if (!getScraperById(sourceId)) notFound();
+    return (
+      <div className="max-w-3xl mx-auto px-4 py-16 text-center space-y-3">
+        <p className="text-white font-semibold text-lg">Não foi possível carregar este mangá</p>
+        <p className="text-zinc-400 text-sm">
+          A fonte <span className="text-zinc-200">{sourceId}</span> não respondeu agora.
+          Tente de novo em alguns segundos.
+        </p>
+        <Link href="/" className="inline-block text-red-400 text-sm hover:underline">
+          ← Voltar ao início
+        </Link>
+      </div>
+    );
+  }
 
   const { manga } = data;
   const firstChapter = manga.chapters.at(-1); // geralmente em ordem decrescente

@@ -3,10 +3,12 @@ import { LeituraMangaScraper } from "./sources/leituramanga";
 import { NexusToonsScraper  } from "./sources/nexustoons";
 import { MangaLixScraper    } from "./sources/mangalix";
 import { MangaDexScraper    } from "./sources/mangadex";
+import { MangaFireScraper   } from "./sources/mangafire";
 
 const scrapers: BaseScraper[] = [
   new LeituraMangaScraper(),
   new NexusToonsScraper(),
+  new MangaFireScraper(),
   new MangaLixScraper(),
   new MangaDexScraper(),
 ];

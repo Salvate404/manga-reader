@@ -12,11 +12,12 @@ export interface SourceOption {
 export const ALL_SOURCES: SourceOption[] = [
   { id: "leituramanga", name: "Leitura Manga", language: "PT-BR" },
   { id: "nexustoons",  name: "Nexus Toons",   language: "PT-BR" },
+  { id: "mangafire",   name: "MangaFire",     language: "EN/PT-BR" },
   { id: "mangalix",    name: "MangaLix",       language: "EN"    },
   { id: "mangadex",    name: "MangaDex",       language: "EN"    },
 ];
 
-const STORAGE_KEY = "manga_reader_sources";
+const STORAGE_KEY = "manga_reader_sources_v2";
 
 export function useSourceFilter() {
   const [selectedSources, setSelectedSources] = useState<Set<string>>(

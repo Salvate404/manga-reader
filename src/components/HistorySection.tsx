@@ -53,8 +53,8 @@ export function HistorySection({ history, onClear }: HistorySectionProps) {
 }
 
 function HistoryCard({ entry }: { entry: ReadingHistoryEntry }) {
-  const mangaHref   = `/manga/${entry.sourceId}/${entry.mangaId}`;
-  const chapterHref = `/read/${entry.sourceId}/${entry.mangaId}/${entry.chapterId}`;
+  const mangaHref   = `/manga/${entry.sourceId}/${encodeURIComponent(entry.mangaId)}`;
+  const chapterHref = `/read/${entry.sourceId}/${encodeURIComponent(entry.mangaId)}/${encodeURIComponent(entry.chapterId)}`;
 
   return (
     <div className="group flex flex-col gap-1.5">

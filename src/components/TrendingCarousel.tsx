@@ -110,7 +110,7 @@ function SourceCarousel({ section }: { section: TrendingSection }) {
 }
 
 function TrendingCard({ manga }: { manga: MangaSearchResult }) {
-  const href = `/manga/${manga.sourceId}/${manga.mangaId}`;
+  const href = `/manga/${manga.sourceId}/${encodeURIComponent(manga.mangaId)}`;
 
   return (
     <Link

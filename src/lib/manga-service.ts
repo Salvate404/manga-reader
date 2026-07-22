@@ -17,9 +17,11 @@ export async function getMangaChapters(
   if (!scraper) return null;
 
   try {
-    const manga = await scraper.getMangaDetail(mangaId);
+    const id = decodeURIComponent(mangaId);
+    const manga = await scraper.getMangaDetail(id);
     return { manga };
-  } catch {
+  } catch (err) {
+    console.error(`[manga-service] ${sourceId}/${mangaId}`, err);
     return null;
   }
 }
